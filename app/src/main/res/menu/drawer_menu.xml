@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/menu/drawer_menu.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/drawer_dashboard"
+            android:icon="@drawable/ic_dashboard"
+            android:title="@string/nav_dashboard"/>
+
+        <item
+            android:id="@+id/drawer_stock"
+            android:icon="@drawable/ic_stock"
+            android:title="@string/nav_stock"/>
+
+        <item
+            android:id="@+id/drawer_sell"
+            android:icon="@drawable/ic_sell"
+            android:title="@string/nav_sell"/>
+
+    </group>
+
+    <item android:title="Management">
+        <menu>
+
+            <item
+                android:id="@+id/drawer_add_company"
+                android:icon="@drawable/ic_company"
+                android:title="@string/nav_add_company"/>
+
+            <item
+                android:id="@+id/drawer_add_stock"
+                android:icon="@drawable/ic_add"
+                android:title="@string/nav_add_stock"/>
+
+        </menu>
+    </item>
+
+    <item android:title="Settings">
+        <menu>
+
+            <item
+                android:id="@+id/drawer_theme"
+                android:icon="@drawable/ic_theme"
+                android:title="@string/nav_theme"/>
+
+            <item
+                android:id="@+id/drawer_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/nav_logout"/>
+
+        </menu>
+    </item>
+
+</menu>
