@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: AndroidManifest.xml -->
+<!-- FILE: app/src/main/AndroidManifest.xml  (REPLACE) -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissions -->
+    <!-- ── Permissions ────────────────────────────────────────────────────── -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <!-- PDF save to external storage (API 28 and below) -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"
         tools:ignore="ScopedStorage"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
+    <!-- Android 13+ push notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:name=".application.TireApp"
@@ -23,7 +28,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
 
-        <!-- Login Activity -->
+        <!-- Login Activity – launcher -->
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
@@ -39,19 +44,19 @@
             android:name=".activities.MainActivity"
             android:exported="false"/>
 
-        <!-- Add Company Activity -->
+        <!-- Add Company -->
         <activity
             android:name=".activities.AddCompanyActivity"
             android:exported="false"
             android:parentActivityName=".activities.MainActivity"/>
 
-        <!-- Add Stock Activity -->
+        <!-- Add Stock -->
         <activity
             android:name=".activities.AddStockActivity"
             android:exported="false"
             android:parentActivityName=".activities.MainActivity"/>
 
-        <!-- File Provider for PDF sharing -->
+        <!-- FileProvider for PDF sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

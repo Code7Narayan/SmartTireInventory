@@ -1,6 +1,7 @@
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,171 +16,245 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.github.mikephil.charting.charts.BarChart;
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.adapters.StockAdapter;
+import com.smarttire.inventory.models.DashboardStatsModel;
+import com.smarttire.inventory.models.MonthlyStats;
 import com.smarttire.inventory.models.Product;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
+import com.smarttire.inventory.utils.ChartHelper;
+import com.smarttire.inventory.utils.NotificationHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
+/**
+ * Dashboard – shows KPI cards, low-stock list, and a monthly revenue bar chart.
+ */
 public class DashboardFragment extends Fragment {
 
+    private static final String TAG = "DashboardFragment";
+
+    // ── Views ─────────────────────────────────────────────────────────────────
     private SwipeRefreshLayout swipeRefresh;
     private TextView tvTotalProducts, tvTotalStock, tvLowStock,
-            tvTotalCompanies, tvTodaySales, tvTotalRevenue;
+                     tvTotalCompanies, tvTodaySales, tvTotalRevenue;
     private TextView tvNoLowStock;
     private RecyclerView rvLowStock;
-    private CardView cardLowStock;
+    private BarChart barChart;
+    private CardView cardChartContainer;
 
+    // ── State ─────────────────────────────────────────────────────────────────
     private ApiService apiService;
     private StockAdapter lowStockAdapter;
-    private List<Product> lowStockList = new ArrayList<>();
+    private final List<Product> lowStockList = new ArrayList<>();
 
-    public DashboardFragment() {}
+    /** Track how many parallel loads are pending so refresh stops at the right time. */
+    private int pendingLoads = 0;
 
-    public static DashboardFragment newInstance() {
-        return new DashboardFragment();
-    }
+    // ── Factory ───────────────────────────────────────────────────────────────
+
+    public static DashboardFragment newInstance() { return new DashboardFragment(); }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_dashboard, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        initViews(view);
-        setupRecyclerView();
-
         apiService = ApiService.getInstance(requireContext());
-        swipeRefresh.setOnRefreshListener(this::loadDashboardData);
-
-        loadDashboardData();
+        initViews(view);
+        setupLowStockList();
+        swipeRefresh.setOnRefreshListener(this::loadAll);
+        loadAll();
     }
 
-    private void initViews(View view) {
-        swipeRefresh       = view.findViewById(R.id.swipeRefresh);
-        tvTotalProducts    = view.findViewById(R.id.tvTotalProducts);
-        tvTotalStock       = view.findViewById(R.id.tvTotalStock);
-        tvLowStock         = view.findViewById(R.id.tvLowStock);
-        tvTotalCompanies   = view.findViewById(R.id.tvTotalCompanies);
-        tvTodaySales       = view.findViewById(R.id.tvTodaySales);
-        tvTotalRevenue     = view.findViewById(R.id.tvTotalRevenue);
-        tvNoLowStock       = view.findViewById(R.id.tvNoLowStock);
-        rvLowStock         = view.findViewById(R.id.rvLowStock);
-        cardLowStock       = view.findViewById(R.id.cardLowStock);
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    private void initViews(View v) {
+        swipeRefresh        = v.findViewById(R.id.swipeRefresh);
+        tvTotalProducts     = v.findViewById(R.id.tvTotalProducts);
+        tvTotalStock        = v.findViewById(R.id.tvTotalStock);
+        tvLowStock          = v.findViewById(R.id.tvLowStock);
+        tvTotalCompanies    = v.findViewById(R.id.tvTotalCompanies);
+        tvTodaySales        = v.findViewById(R.id.tvTodaySales);
+        tvTotalRevenue      = v.findViewById(R.id.tvTotalRevenue);
+        tvNoLowStock        = v.findViewById(R.id.tvNoLowStock);
+        rvLowStock          = v.findViewById(R.id.rvLowStock);
+        barChart            = v.findViewById(R.id.barChart);
+        cardChartContainer  = v.findViewById(R.id.cardChartContainer);
     }
 
-    private void setupRecyclerView() {
+    private void setupLowStockList() {
         lowStockAdapter = new StockAdapter(requireContext(), lowStockList);
         rvLowStock.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvLowStock.setAdapter(lowStockAdapter);
+        rvLowStock.setNestedScrollingEnabled(false);
     }
 
-    private void loadDashboardData() {
-        swipeRefresh.setRefreshing(true);
+    // ── Load data ─────────────────────────────────────────────────────────────
 
-        // Load statistics
+    private void loadAll() {
+        pendingLoads = 3;                 // dashboard + lowStock + monthlySales
+        swipeRefresh.setRefreshing(true);
+        loadDashboardStats();
+        loadLowStock();
+        loadMonthlyChart();
+    }
+
+    /** Decrement counter; stop spinner when all 3 calls complete. */
+    private void onLoadComplete() {
+        if (!isAdded()) return;
+        pendingLoads--;
+        if (pendingLoads <= 0) {
+            swipeRefresh.setRefreshing(false);
+        }
+    }
+
+    // ── Dashboard KPIs ────────────────────────────────────────────────────────
+
+    private void loadDashboardStats() {
         apiService.getDashboard(new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
-                if (isAdded()) {
-                    try {
-                        if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                            JSONObject data = response.getJSONObject(ApiConfig.KEY_DATA);
-                            updateUI(data);
-                        } else {
-                            Toast.makeText(requireContext(),
-                                    response.optString(ApiConfig.KEY_MESSAGE, "Error"),
-                                    Toast.LENGTH_SHORT).show();
+                if (!isAdded()) return;
+                onLoadComplete();
+                try {
+                    if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
+                        JSONObject data = response.optJSONObject(ApiConfig.KEY_DATA);
+                        if (data != null) {
+                            DashboardStatsModel stats = DashboardStatsModel.fromJSON(data);
+                            bindStats(stats);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing dashboard stats", e);
                 }
             }
 
             @Override
             public void onError(String error) {
-                if (isAdded()) {
-                    swipeRefresh.setRefreshing(false);
-                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
-                }
+                if (!isAdded()) return;
+                onLoadComplete();
+                Log.e(TAG, "Dashboard API Error: " + error);
             }
         });
+    }
 
-        // Load low stock items
+    private void bindStats(DashboardStatsModel s) {
+        tvTotalProducts.setText(String.valueOf(s.getTotalProducts()));
+        tvTotalStock.setText(String.valueOf(s.getTotalStock()));
+        tvTotalCompanies.setText(String.valueOf(s.getTotalCompanies()));
+        tvTodaySales.setText(String.valueOf(s.getTodaySalesCount()));
+        tvTotalRevenue.setText(s.getFormattedTodayRevenue());
+
+        tvLowStock.setText(String.valueOf(s.getLowStockCount()));
+        if (s.hasLowStock()) {
+            tvLowStock.setTextColor(requireContext().getColor(R.color.warning));
+        } else {
+            tvLowStock.setTextColor(requireContext().getColor(R.color.success));
+        }
+    }
+
+    // ── Low Stock ─────────────────────────────────────────────────────────────
+
+    private void loadLowStock() {
         apiService.getLowStock(new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
-                if (isAdded()) {
-                    swipeRefresh.setRefreshing(false);
-                    try {
-                        if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                            JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
-                            lowStockList.clear();
+                if (!isAdded()) return;
+                onLoadComplete();
+                try {
+                    if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
+                        JSONArray data = response.optJSONArray(ApiConfig.KEY_DATA);
+                        lowStockList.clear();
+                        if (data != null) {
                             for (int i = 0; i < data.length(); i++) {
                                 lowStockList.add(parseProduct(data.getJSONObject(i)));
                             }
-                            lowStockAdapter.notifyDataSetChanged();
-                            tvNoLowStock.setVisibility(
-                                    lowStockList.isEmpty() ? View.VISIBLE : View.GONE);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        lowStockAdapter.notifyDataSetChanged();
+                        tvNoLowStock.setVisibility(lowStockList.isEmpty() ? View.VISIBLE : View.GONE);
+
+                        if (!lowStockList.isEmpty()) {
+                            NotificationHelper.showLowStockAlert(requireContext(), lowStockList);
+                        }
                     }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing low stock", e);
                 }
             }
 
             @Override
             public void onError(String error) {
-                if (isAdded()) {
-                    swipeRefresh.setRefreshing(false);
+                if (!isAdded()) return;
+                onLoadComplete();
+            }
+        });
+    }
+
+    // ── Monthly Chart ─────────────────────────────────────────────────────────
+
+    private void loadMonthlyChart() {
+        apiService.getMonthlySales(6, new ApiService.ApiCallback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                if (!isAdded()) return;
+                onLoadComplete();
+                try {
+                    if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
+                        JSONArray data = response.optJSONArray(ApiConfig.KEY_DATA);
+                        List<MonthlyStats> monthly = new ArrayList<>();
+                        if (data != null) {
+                            for (int i = 0; i < data.length(); i++) {
+                                monthly.add(MonthlyStats.fromJSON(data.getJSONObject(i)));
+                            }
+                        }
+                        if (!monthly.isEmpty()) {
+                            cardChartContainer.setVisibility(View.VISIBLE);
+                            ChartHelper.applyMonthlyRevenueChart(barChart, monthly, requireContext());
+                        } else {
+                            cardChartContainer.setVisibility(View.GONE);
+                        }
+                    } else {
+                        cardChartContainer.setVisibility(View.GONE);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing monthly sales", e);
+                    cardChartContainer.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) return;
+                onLoadComplete();
+                Log.e(TAG, "Monthly Sales API Error (500 likely): " + error);
+                if (cardChartContainer != null) {
+                    cardChartContainer.setVisibility(View.GONE);
                 }
             }
         });
     }
 
-    private void updateUI(JSONObject data) throws Exception {
-        tvTotalProducts.setText(String.valueOf(data.optInt("total_products", 0)));
-        tvTotalStock.setText(String.valueOf(data.optInt("total_stock", 0)));
-        tvLowStock.setText(String.valueOf(data.optInt("low_stock_count", 0)));
-        tvTotalCompanies.setText(String.valueOf(data.optInt("total_companies", 0)));
-        tvTodaySales.setText(String.valueOf(data.optInt("today_sales_count", 0)));
-
-        // ── FIX: accept either key name the server might send ──────────────
-        double revenue = 0.0;
-        if (data.has("today_revenue")) {
-            revenue = data.getDouble("today_revenue");
-        } else if (data.has("today_sales_amount")) {
-            revenue = data.getDouble("today_sales_amount");
-        } else if (data.has("total_revenue")) {
-            revenue = data.getDouble("total_revenue");
-        }
-        // ───────────────────────────────────────────────────────────────────
-
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
-        tvTotalRevenue.setText(fmt.format(revenue));
-    }
-
     private Product parseProduct(JSONObject obj) throws Exception {
-        Product product = new Product();
-        product.setId(obj.optInt("id"));
-        product.setCompanyName(obj.optString("company_name"));
-        product.setTireType(obj.optString("tire_type"));
-        product.setTireSize(obj.optString("tire_size"));
-        product.setQuantity(obj.optInt("quantity"));
-        product.setPrice(obj.optDouble("price"));
-        return product;
+        Product p = new Product();
+        p.setId(obj.optInt("id"));
+        p.setCompanyName(obj.optString("company_name"));
+        p.setTireType(obj.optString("tire_type"));
+        p.setTireSize(obj.optString("tire_size"));
+        p.setQuantity(obj.optInt("quantity"));
+        p.setPrice(obj.optDouble("price"));
+        return p;
     }
 }

@@ -1,13 +1,13 @@
-// FILE: activities/MainActivity.java
+// FILE: app/src/main/java/com/smarttire/inventory/activities/MainActivity.java  (REPLACE)
 package com.smarttire.inventory.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -16,11 +16,14 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
+
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.fragments.DashboardFragment;
+import com.smarttire.inventory.fragments.SalesHistoryFragment;
 import com.smarttire.inventory.fragments.SellFragment;
 import com.smarttire.inventory.fragments.StockFragment;
 import com.smarttire.inventory.utils.SharedPrefManager;
@@ -29,12 +32,14 @@ import com.smarttire.inventory.utils.ThemeManager;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private DrawerLayout drawerLayout;
-    private NavigationView navigationView;
+    private DrawerLayout         drawerLayout;
+    private NavigationView       navigationView;
     private BottomNavigationView bottomNavigationView;
-    private MaterialToolbar toolbar;
+    private MaterialToolbar      toolbar;
+    private SharedPrefManager    prefManager;
 
-    private SharedPrefManager prefManager;
+    // Remember last-selected fragment to avoid unnecessary recreations
+    private int currentNavId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,23 +53,24 @@ public class MainActivity extends AppCompatActivity
         setupNavigationDrawer();
         setupBottomNavigation();
 
-        // Load default fragment
         if (savedInstanceState == null) {
-            loadFragment(new DashboardFragment());
+            loadFragment(new DashboardFragment(), "Dashboard");
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+            currentNavId = R.id.nav_dashboard;
         }
     }
 
-    private void initViews() {
-        drawerLayout = findViewById(R.id.drawerLayout);
-        navigationView = findViewById(R.id.navigationView);
-        bottomNavigationView = findViewById(R.id.bottomNavigationView);
-        toolbar = findViewById(R.id.toolbar);
+    // ── Init ──────────────────────────────────────────────────────────────────
 
-        // Update navigation header
-        View headerView = navigationView.getHeaderView(0);
-        TextView tvUserName = headerView.findViewById(R.id.tvUserName);
-        tvUserName.setText(prefManager.getFullName());
+    private void initViews() {
+        drawerLayout         = findViewById(R.id.drawerLayout);
+        navigationView       = findViewById(R.id.navigationView);
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        toolbar              = findViewById(R.id.toolbar);
+
+        View headerView  = navigationView.getHeaderView(0);
+        TextView tvName  = headerView.findViewById(R.id.tvUserName);
+        tvName.setText(prefManager.getFullName());
     }
 
     private void setupToolbar() {
@@ -74,74 +80,82 @@ public class MainActivity extends AppCompatActivity
     private void setupNavigationDrawer() {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, toolbar,
-                R.string.nav_dashboard, R.string.nav_dashboard);
-
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         toggle.getDrawerArrowDrawable().setColor(getResources().getColor(R.color.white));
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-
         navigationView.setNavigationItemSelectedListener(this);
     }
 
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
-            Fragment fragment = null;
-            int itemId = item.getItemId();
+            int id = item.getItemId();
+            if (id == currentNavId) return true;  // already on this tab
 
-            if (itemId == R.id.nav_dashboard) {
-                fragment = new DashboardFragment();
-                toolbar.setTitle(R.string.nav_dashboard);
-            } else if (itemId == R.id.nav_stock) {
-                fragment = new StockFragment();
-                toolbar.setTitle(R.string.nav_stock);
-            } else if (itemId == R.id.nav_sell) {
-                fragment = new SellFragment();
-                toolbar.setTitle(R.string.nav_sell);
+            Fragment f      = null;
+            String   title  = "";
+
+            if (id == R.id.nav_dashboard) {
+                f = new DashboardFragment(); title = "Dashboard";
+            } else if (id == R.id.nav_stock) {
+                f = new StockFragment(); title = "Stock";
+            } else if (id == R.id.nav_sell) {
+                f = new SellFragment(); title = "Sell Product";
+            } else if (id == R.id.nav_sales_history) {
+                f = new SalesHistoryFragment(); title = "Sales History";
             }
 
-            if (fragment != null) {
-                loadFragment(fragment);
+            if (f != null) {
+                currentNavId = id;
+                loadFragment(f, title);
                 return true;
             }
             return false;
         });
     }
 
-    private void loadFragment(Fragment fragment) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragmentContainer, fragment);
-        transaction.commit();
+    // ── Fragment loading ──────────────────────────────────────────────────────
+
+    private void loadFragment(Fragment fragment, String title) {
+        toolbar.setTitle(title);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .commit();
     }
+
+    // ── Drawer navigation ─────────────────────────────────────────────────────
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int itemId = item.getItemId();
+        int id = item.getItemId();
 
-        if (itemId == R.id.drawer_dashboard) {
-            loadFragment(new DashboardFragment());
-            toolbar.setTitle(R.string.nav_dashboard);
+        if (id == R.id.drawer_dashboard) {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
 
-        } else if (itemId == R.id.drawer_stock) {
-            loadFragment(new StockFragment());
-            toolbar.setTitle(R.string.nav_stock);
+        } else if (id == R.id.drawer_stock) {
             bottomNavigationView.setSelectedItemId(R.id.nav_stock);
 
-        } else if (itemId == R.id.drawer_sell) {
-            loadFragment(new SellFragment());
-            toolbar.setTitle(R.string.nav_sell);
+        } else if (id == R.id.drawer_sell) {
             bottomNavigationView.setSelectedItemId(R.id.nav_sell);
 
-        } else if (itemId == R.id.drawer_add_company) {
+        } else if (id == R.id.drawer_sales_history) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_sales_history);
+
+        } else if (id == R.id.drawer_add_company) {
             startActivity(new Intent(this, AddCompanyActivity.class));
 
-        } else if (itemId == R.id.drawer_add_stock) {
+        } else if (id == R.id.drawer_add_stock) {
             startActivity(new Intent(this, AddStockActivity.class));
 
-        } else if (itemId == R.id.drawer_theme) {
-            toggleTheme();
+        } else if (id == R.id.drawer_theme) {
+            boolean isDark = ThemeManager.isDarkTheme(this);
+            Toast.makeText(this,
+                    isDark ? "Switching to Light Theme" : "Switching to Dark Theme",
+                    Toast.LENGTH_SHORT).show();
+            ThemeManager.toggleTheme(this);
 
-        } else if (itemId == R.id.drawer_logout) {
+        } else if (id == R.id.drawer_logout) {
             showLogoutDialog();
         }
 
@@ -149,18 +163,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void toggleTheme() {
-        boolean isDark = ThemeManager.isDarkTheme(this);
-        String themeMessage = isDark ? "Switching to Light Theme" : "Switching to Dark Theme";
-        Toast.makeText(this, themeMessage, Toast.LENGTH_SHORT).show();
-        ThemeManager.toggleTheme(this);
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void showLogoutDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Logout")
                 .setMessage(R.string.logout_confirm)
-                .setPositiveButton(R.string.yes, (dialog, which) -> performLogout())
+                .setPositiveButton(R.string.yes, (d, w) -> performLogout())
                 .setNegativeButton(R.string.no, null)
                 .show();
     }

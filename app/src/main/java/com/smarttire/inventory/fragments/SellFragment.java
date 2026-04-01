@@ -1,3 +1,4 @@
+// FILE: app/src/main/java/com/smarttire/inventory/fragments/SellFragment.java  (REPLACE)
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.smarttire.inventory.R;
@@ -36,137 +38,123 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Sell Product screen – upgraded with:
+ *  • Optional customer name field
+ *  • Optional GST number field
+ *  • Snackbar confirmations
+ *  • Proper invoice button visibility management
+ */
 public class SellFragment extends Fragment {
 
-    private AutoCompleteTextView spinnerProduct;
-    private CardView cardProductInfo;
-    private TextView tvAvailableStock, tvUnitPrice, tvTotalPrice;
-    private TextInputLayout tilQuantity;
-    private TextInputEditText etQuantity;
-    private MaterialButton btnSell, btnGenerateInvoice;
+    // ── Views ─────────────────────────────────────────────────────────────────
+    private AutoCompleteTextView    spinnerProduct;
+    private CardView                cardProductInfo;
+    private TextView                tvAvailableStock, tvUnitPrice, tvTotalPrice;
+    private TextInputLayout         tilQuantity;
+    private TextInputEditText       etQuantity, etCustomerName, etGstNumber;
+    private MaterialButton          btnSell, btnGenerateInvoice, btnShareInvoice;
     private LinearProgressIndicator progressBar;
 
-    private ApiService apiService;
-    private List<Product> productList = new ArrayList<>();
-    private Product selectedProduct;
+    // ── State ─────────────────────────────────────────────────────────────────
+    private ApiService       apiService;
+    private List<Product>    productList   = new ArrayList<>();
+    private Product          selectedProduct;
+    private Sale             lastSale      = null;
+    private File             lastPdfFile   = null;
 
-    // Holds the last completed sale for invoice generation
-    private Sale lastSale = null;
+    // ── Factory ───────────────────────────────────────────────────────────────
 
-    public SellFragment() {}
+    public static SellFragment newInstance() { return new SellFragment(); }
 
-    public static SellFragment newInstance() {
-        return new SellFragment();
-    }
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_sell, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        initViews(view);
         apiService = ApiService.getInstance(requireContext());
-
+        initViews(view);
         setupListeners();
         loadProducts();
     }
 
-    private void initViews(View view) {
-        spinnerProduct     = view.findViewById(R.id.spinnerProduct);
-        cardProductInfo    = view.findViewById(R.id.cardProductInfo);
-        tvAvailableStock   = view.findViewById(R.id.tvAvailableStock);
-        tvUnitPrice        = view.findViewById(R.id.tvUnitPrice);
-        tvTotalPrice       = view.findViewById(R.id.tvTotalPrice);
-        tilQuantity        = view.findViewById(R.id.tilQuantity);
-        etQuantity         = view.findViewById(R.id.etQuantity);
-        btnSell            = view.findViewById(R.id.btnSell);
-        btnGenerateInvoice = view.findViewById(R.id.btnGenerateInvoice);
-        progressBar        = view.findViewById(R.id.progressBar);
+    // ── Init ──────────────────────────────────────────────────────────────────
 
-        // Invoice button hidden until a sale completes
-        if (btnGenerateInvoice != null) {
-            btnGenerateInvoice.setVisibility(View.GONE);
-        }
+    private void initViews(View v) {
+        spinnerProduct      = v.findViewById(R.id.spinnerProduct);
+        cardProductInfo     = v.findViewById(R.id.cardProductInfo);
+        tvAvailableStock    = v.findViewById(R.id.tvAvailableStock);
+        tvUnitPrice         = v.findViewById(R.id.tvUnitPrice);
+        tvTotalPrice        = v.findViewById(R.id.tvTotalPrice);
+        tilQuantity         = v.findViewById(R.id.tilQuantity);
+        etQuantity          = v.findViewById(R.id.etQuantity);
+        etCustomerName      = v.findViewById(R.id.etCustomerName);
+        etGstNumber         = v.findViewById(R.id.etGstNumber);
+        btnSell             = v.findViewById(R.id.btnSell);
+        btnGenerateInvoice  = v.findViewById(R.id.btnGenerateInvoice);
+        btnShareInvoice     = v.findViewById(R.id.btnShareInvoice);
+        progressBar         = v.findViewById(R.id.progressBar);
+
+        // Hidden until a sale succeeds
+        if (btnGenerateInvoice != null) btnGenerateInvoice.setVisibility(View.GONE);
+        if (btnShareInvoice    != null) btnShareInvoice.setVisibility(View.GONE);
     }
 
     private void setupListeners() {
-        spinnerProduct.setOnItemClickListener((parent, view, position, id) -> {
-            selectedProduct = (Product) parent.getItemAtPosition(position);
+        spinnerProduct.setOnItemClickListener((parent, view, pos, id) -> {
+            selectedProduct = (Product) parent.getItemAtPosition(pos);
             updateProductInfo();
         });
 
         etQuantity.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            @Override public void afterTextChanged(Editable s) {}
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
                 calculateTotal();
             }
-            @Override public void afterTextChanged(Editable s) {}
         });
 
         btnSell.setOnClickListener(v -> performSell());
 
-        // ── FIX: btnGenerateInvoice now has a click listener ──────────────
         if (btnGenerateInvoice != null) {
-            btnGenerateInvoice.setOnClickListener(v -> {
-                if (lastSale != null) {
-                    try {
-                        PdfGenerator generator = new PdfGenerator(requireContext(), lastSale);
-                        File pdfFile = generator.generateInvoice();
-                        if (pdfFile != null) {
-                            generator.openPdf(pdfFile);
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to generate PDF", Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Exception e) {
-                        Toast.makeText(requireContext(),
-                                "Could not generate invoice: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(requireContext(),
-                            "No sale to generate invoice for", Toast.LENGTH_SHORT).show();
-                }
-            });
+            btnGenerateInvoice.setOnClickListener(v -> openInvoice());
+        }
+        if (btnShareInvoice != null) {
+            btnShareInvoice.setOnClickListener(v -> shareInvoice());
         }
     }
+
+    // ── Product loading ───────────────────────────────────────────────────────
 
     private void loadProducts() {
         showLoading(true);
         apiService.getProducts(new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
-                if (isAdded()) {
-                    showLoading(false);
-                    try {
-                        if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                            JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
-                            productList.clear();
-                            for (int i = 0; i < data.length(); i++) {
-                                productList.add(parseProduct(data.getJSONObject(i)));
-                            }
-                            setupProductSpinner();
-                        } else {
-                            Toast.makeText(requireContext(),
-                                    response.optString(ApiConfig.KEY_MESSAGE, "Failed to load products"),
-                                    Toast.LENGTH_SHORT).show();
+                if (!isAdded()) return;
+                showLoading(false);
+                try {
+                    if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
+                        JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
+                        productList.clear();
+                        for (int i = 0; i < data.length(); i++) {
+                            productList.add(parseProduct(data.getJSONObject(i)));
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        setupProductSpinner();
                     }
-                }
+                } catch (Exception e) { e.printStackTrace(); }
             }
-
             @Override
             public void onError(String error) {
-                if (isAdded()) {
-                    showLoading(false);
-                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
-                }
+                if (!isAdded()) return;
+                showLoading(false);
+                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -176,6 +164,8 @@ public class SellFragment extends Fragment {
                 requireContext(), android.R.layout.simple_dropdown_item_1line, productList);
         spinnerProduct.setAdapter(adapter);
     }
+
+    // ── UI updates ────────────────────────────────────────────────────────────
 
     private void updateProductInfo() {
         if (selectedProduct != null) {
@@ -189,20 +179,21 @@ public class SellFragment extends Fragment {
     }
 
     private void calculateTotal() {
-        if (selectedProduct != null) {
-            String qtyStr = etQuantity.getText().toString().trim();
-            if (!qtyStr.isEmpty()) {
-                try {
-                    int qty = Integer.parseInt(qtyStr);
-                    double total = qty * selectedProduct.getPrice();
-                    NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
-                    tvTotalPrice.setText(fmt.format(total));
-                    return;
-                } catch (NumberFormatException ignored) {}
-            }
+        if (selectedProduct == null) { tvTotalPrice.setText("₹0.00"); return; }
+        String qtyStr = etQuantity.getText() != null ? etQuantity.getText().toString().trim() : "";
+        if (!qtyStr.isEmpty()) {
+            try {
+                int qty = Integer.parseInt(qtyStr);
+                double total = qty * selectedProduct.getPrice();
+                tvTotalPrice.setText(
+                        NumberFormat.getCurrencyInstance(new Locale("en", "IN")).format(total));
+                return;
+            } catch (NumberFormatException ignored) {}
         }
         tvTotalPrice.setText("₹0.00");
     }
+
+    // ── Sell action ───────────────────────────────────────────────────────────
 
     private void performSell() {
         tilQuantity.setError(null);
@@ -212,33 +203,27 @@ public class SellFragment extends Fragment {
             return;
         }
 
-        String qtyStr = etQuantity.getText().toString().trim();
-        if (qtyStr.isEmpty()) {
-            tilQuantity.setError("Quantity is required");
-            return;
-        }
+        String qtyStr = etQuantity.getText() != null ?
+                etQuantity.getText().toString().trim() : "";
+        if (qtyStr.isEmpty()) { tilQuantity.setError("Quantity is required"); return; }
 
         int quantity;
         try {
             quantity = Integer.parseInt(qtyStr);
         } catch (NumberFormatException e) {
-            tilQuantity.setError("Enter a valid number");
-            return;
+            tilQuantity.setError("Enter a valid number"); return;
         }
 
-        if (quantity <= 0) {
-            tilQuantity.setError("Quantity must be greater than 0");
-            return;
-        }
-
+        if (quantity <= 0) { tilQuantity.setError("Quantity must be > 0"); return; }
         if (quantity > selectedProduct.getQuantity()) {
-            tilQuantity.setError("Not enough stock. Available: " + selectedProduct.getQuantity());
+            tilQuantity.setError("Not enough stock. Available: " +
+                    selectedProduct.getQuantity());
             return;
         }
 
         showLoading(true);
 
-        double unitPrice = selectedProduct.getPrice();
+        double unitPrice  = selectedProduct.getPrice();
         double totalPrice = quantity * unitPrice;
 
         apiService.sellProduct(
@@ -246,63 +231,111 @@ public class SellFragment extends Fragment {
                 selectedProduct.getCompanyName(),
                 selectedProduct.getTireType(),
                 selectedProduct.getTireSize(),
-                quantity,
-                unitPrice,
-                totalPrice,
+                quantity, unitPrice, totalPrice,
                 new ApiService.ApiCallback() {
-            @Override
-            public void onSuccess(JSONObject response) {
-                if (isAdded()) {
-                    showLoading(false);
-                    try {
-                        boolean success = response.getBoolean(ApiConfig.KEY_SUCCESS);
-                        String  message = response.optString(ApiConfig.KEY_MESSAGE, "");
-
-                        if (success) {
-                            Toast.makeText(requireContext(),
-                                    "Sale successful!", Toast.LENGTH_SHORT).show();
-
-                            // Build Sale object for invoice
-                            JSONObject data = response.optJSONObject(ApiConfig.KEY_DATA);
-                            if (data != null) {
-                                lastSale = new Sale();
-                                lastSale.setSaleId(data.optInt("sale_id"));
-                                lastSale.setCompanyName(data.optString("company_name"));
-                                lastSale.setTireType(data.optString("tire_type"));
-                                lastSale.setTireSize(data.optString("tire_size"));
-                                lastSale.setQuantity(data.optInt("quantity_sold"));
-                                lastSale.setUnitPrice(data.optDouble("unit_price"));
-                                lastSale.setTotalPrice(data.optDouble("total_price"));
-                                lastSale.setRemainingStock(data.optInt("remaining_stock"));
-
-                                // Show invoice button after a successful sale
-                                if (btnGenerateInvoice != null) {
-                                    btnGenerateInvoice.setVisibility(View.VISIBLE);
+                    @Override
+                    public void onSuccess(JSONObject response) {
+                        if (!isAdded()) return;
+                        showLoading(false);
+                        try {
+                            boolean success = response.getBoolean(ApiConfig.KEY_SUCCESS);
+                            if (success) {
+                                JSONObject data = response.optJSONObject(ApiConfig.KEY_DATA);
+                                if (data != null) {
+                                    lastSale = new Sale();
+                                    lastSale.setSaleId(data.optInt("sale_id"));
+                                    lastSale.setCompanyName(data.optString("company_name"));
+                                    lastSale.setTireType(data.optString("tire_type"));
+                                    lastSale.setTireSize(data.optString("tire_size"));
+                                    lastSale.setQuantity(data.optInt("quantity_sold"));
+                                    lastSale.setUnitPrice(data.optDouble("unit_price"));
+                                    lastSale.setTotalPrice(data.optDouble("total_price"));
+                                    lastSale.setRemainingStock(data.optInt("remaining_stock"));
                                 }
+
+                                // Pre-generate PDF immediately for instant open/share
+                                generatePdfInBackground();
+
+                                // Show invoice buttons
+                                if (btnGenerateInvoice != null)
+                                    btnGenerateInvoice.setVisibility(View.VISIBLE);
+                                if (btnShareInvoice != null)
+                                    btnShareInvoice.setVisibility(View.VISIBLE);
+
+                                // Snackbar with action
+                                View root = requireView();
+                                Snackbar.make(root, "Sale recorded successfully!",
+                                        Snackbar.LENGTH_LONG)
+                                        .setAction("Open Invoice", v -> openInvoice())
+                                        .show();
+
+                                clearForm();
+                                loadProducts(); // refresh stock quantities
+
+                            } else {
+                                Toast.makeText(requireContext(),
+                                        response.optString(ApiConfig.KEY_MESSAGE, "Sale failed"),
+                                        Toast.LENGTH_SHORT).show();
                             }
-
-                            clearForm();
-                            loadProducts(); // Refresh stock quantities
-                        } else {
-                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(requireContext(),
-                                "Error reading response", Toast.LENGTH_SHORT).show();
                     }
-                }
-            }
 
-            @Override
-            public void onError(String error) {
-                if (isAdded()) {
-                    showLoading(false);
-                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+                    @Override
+                    public void onError(String error) {
+                        if (!isAdded()) return;
+                        showLoading(false);
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
+    // ── Invoice actions ───────────────────────────────────────────────────────
+
+    private void generatePdfInBackground() {
+        if (lastSale == null) return;
+        String customer = etCustomerName != null && etCustomerName.getText() != null
+                ? etCustomerName.getText().toString().trim() : "";
+        String gst = etGstNumber != null && etGstNumber.getText() != null
+                ? etGstNumber.getText().toString().trim() : "";
+
+        new Thread(() -> {
+            PdfGenerator gen = new PdfGenerator(requireContext(), lastSale)
+                    .setCustomerName(customer)
+                    .setGstNumber(gst);
+            lastPdfFile = gen.generateInvoice();
+        }).start();
+    }
+
+    private void openInvoice() {
+        if (lastSale == null) return;
+        if (lastPdfFile != null && lastPdfFile.exists()) {
+            new PdfGenerator(requireContext(), lastSale).openPdf(lastPdfFile);
+        } else {
+            // Regenerate if not ready yet
+            String customer = etCustomerName != null && etCustomerName.getText() != null
+                    ? etCustomerName.getText().toString().trim() : "";
+            String gst = etGstNumber != null && etGstNumber.getText() != null
+                    ? etGstNumber.getText().toString().trim() : "";
+            PdfGenerator gen = new PdfGenerator(requireContext(), lastSale)
+                    .setCustomerName(customer)
+                    .setGstNumber(gst);
+            lastPdfFile = gen.generateInvoice();
+            if (lastPdfFile != null) gen.openPdf(lastPdfFile);
+            else Toast.makeText(requireContext(), "PDF generation failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareInvoice() {
+        if (lastSale == null || lastPdfFile == null) {
+            Toast.makeText(requireContext(), "Generate invoice first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new PdfGenerator(requireContext(), lastSale).sharePdf(lastPdfFile);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void clearForm() {
         spinnerProduct.setText("", false);
@@ -319,14 +352,14 @@ public class SellFragment extends Fragment {
     }
 
     private Product parseProduct(JSONObject obj) throws Exception {
-        Product product = new Product();
-        product.setId(obj.getInt("id"));
-        product.setCompanyId(obj.optInt("company_id"));
-        product.setCompanyName(obj.getString("company_name"));
-        product.setTireType(obj.getString("tire_type"));
-        product.setTireSize(obj.getString("tire_size"));
-        product.setQuantity(obj.getInt("quantity"));
-        product.setPrice(obj.getDouble("price"));
-        return product;
+        Product p = new Product();
+        p.setId(obj.getInt("id"));
+        p.setCompanyId(obj.optInt("company_id"));
+        p.setCompanyName(obj.getString("company_name"));
+        p.setTireType(obj.getString("tire_type"));
+        p.setTireSize(obj.getString("tire_size"));
+        p.setQuantity(obj.getInt("quantity"));
+        p.setPrice(obj.getDouble("price"));
+        return p;
     }
 }

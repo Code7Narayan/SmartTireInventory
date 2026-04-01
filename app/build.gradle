@@ -1,5 +1,4 @@
-// FILE: build.gradle (Module: app)
-
+// FILE: app/build.gradle  (REPLACE existing file)
 plugins {
     id 'com.android.application'
 }
@@ -12,9 +11,8 @@ android {
         applicationId "com.smarttire.inventory"
         minSdk 23
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
-
+        versionCode 2
+        versionName "2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,6 +35,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation libs.swiperefreshlayout
+    implementation libs.activity
 
     // Navigation
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
@@ -51,7 +50,15 @@ dependencies {
 
     // Gson for JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation libs.activity
+
+    // ✅ MPAndroidChart for Sales Analytics
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
+    // ✅ WorkManager for background notifications
+    implementation 'androidx.work:work-runtime:2.9.0'
+
+    // ✅ SwipeToDelete in RecyclerView
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

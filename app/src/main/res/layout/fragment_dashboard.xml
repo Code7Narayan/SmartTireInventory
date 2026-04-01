@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_dashboard.xml -->
+<!-- FILE: app/src/main/res/layout/fragment_dashboard.xml  (REPLACE) -->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -18,7 +18,7 @@
             android:orientation="vertical"
             android:padding="@dimen/padding_medium">
 
-            <!-- Welcome Text -->
+            <!-- ── Section header ────────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -28,15 +28,14 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="@dimen/margin_medium"/>
 
-            <!-- Stats Grid -->
+            <!-- ── Stats Grid ─────────────────────────────────────────────── -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:columnCount="2"
-                android:rowCount="3"
                 android:useDefaultMargins="true">
 
-                <!-- Total Products Card -->
+                <!-- Total Products -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
                     android:layout_height="@dimen/dashboard_card_height"
@@ -44,20 +43,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_tire"
                             android:tint="@color/primary"/>
-
                         <TextView
                             android:id="@+id/tvTotalProducts"
                             android:layout_width="wrap_content"
@@ -67,19 +63,16 @@
                             android:textSize="@dimen/text_size_xlarge"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/total_products"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Stock Card -->
+                <!-- Total Stock -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
                     android:layout_height="@dimen/dashboard_card_height"
@@ -87,20 +80,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_stock"
                             android:tint="@color/info"/>
-
                         <TextView
                             android:id="@+id/tvTotalStock"
                             android:layout_width="wrap_content"
@@ -110,19 +100,16 @@
                             android:textSize="@dimen/text_size_xlarge"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/total_stock"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Low Stock Alert Card -->
+                <!-- Low Stock Alert -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardLowStock"
                     android:layout_width="0dp"
@@ -131,20 +118,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_warning"
                             android:tint="@color/warning"/>
-
                         <TextView
                             android:id="@+id/tvLowStock"
                             android:layout_width="wrap_content"
@@ -154,19 +138,16 @@
                             android:textSize="@dimen/text_size_xlarge"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/low_stock_alert"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Companies Card -->
+                <!-- Total Companies -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
                     android:layout_height="@dimen/dashboard_card_height"
@@ -174,20 +155,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_company"
                             android:tint="@color/success"/>
-
                         <TextView
                             android:id="@+id/tvTotalCompanies"
                             android:layout_width="wrap_content"
@@ -197,19 +175,16 @@
                             android:textSize="@dimen/text_size_xlarge"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/total_companies"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Today's Sales Card -->
+                <!-- Today's Sales Count -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
                     android:layout_height="@dimen/dashboard_card_height"
@@ -217,20 +192,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_sell"
                             android:tint="@color/primary"/>
-
                         <TextView
                             android:id="@+id/tvTodaySales"
                             android:layout_width="wrap_content"
@@ -240,19 +212,16 @@
                             android:textSize="@dimen/text_size_xlarge"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/today_sales"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Revenue Card -->
+                <!-- Today's Revenue -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
                     android:layout_height="@dimen/dashboard_card_height"
@@ -260,20 +229,17 @@
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/card_elevation"
                     app:cardBackgroundColor="@color/card_background">
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
                         android:padding="@dimen/padding_medium"
                         android:gravity="center">
-
                         <ImageView
                             android:layout_width="@dimen/icon_size_large"
                             android:layout_height="@dimen/icon_size_large"
                             android:src="@drawable/ic_money"
                             android:tint="@color/success"/>
-
                         <TextView
                             android:id="@+id/tvTotalRevenue"
                             android:layout_width="wrap_content"
@@ -283,26 +249,58 @@
                             android:textSize="@dimen/text_size_large"
                             android:textStyle="bold"
                             android:layout_marginTop="@dimen/margin_small"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/total_revenue"
+                            android:text="@string/today_revenue"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_size_small"/>
-
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
             </GridLayout>
 
-            <!-- Low Stock Section -->
+            <!-- ── Monthly Revenue Chart ───────────────────────────────────── -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardChartContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_large"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation"
+                app:cardBackgroundColor="@color/card_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/padding_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Monthly Revenue (Last 6 Months)"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_medium"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/margin_small"/>
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/barChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"/>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- ── Low Stock Section ───────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Low Stock Items"
-                android:textColor="@color/text_primary"
+                android:text="⚠  Low Stock Items"
+                android:textColor="@color/warning"
                 android:textSize="@dimen/text_size_large"
                 android:textStyle="bold"
                 android:layout_marginTop="@dimen/margin_large"
@@ -318,15 +316,14 @@
                 android:id="@+id/tvNoLowStock"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="No low stock items"
-                android:textColor="@color/text_secondary"
+                android:text="✓  All products are well stocked"
+                android:textColor="@color/success"
                 android:textSize="@dimen/text_size_normal"
                 android:textAlignment="center"
                 android:padding="@dimen/padding_large"
                 android:visibility="gone"/>
 
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

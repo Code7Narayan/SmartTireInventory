@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: app/src/main/res/layout/item_sale.xml -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginBottom="@dimen/margin_small"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/card_corner_radius"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/padding_medium">
+
+        <!-- Top row: Sale ID + Date -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvSaleId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sale #1"
+                android:textColor="@color/primary"
+                android:textSize="@dimen/text_size_small"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvSaleDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="25 Mar 2026  06:22"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/text_size_small"/>
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginVertical="8dp"/>
+
+        <!-- Company name -->
+        <TextView
+            android:id="@+id/tvSaleCompany"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MRF"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_size_medium"
+            android:textStyle="bold"/>
+
+        <!-- Tire details -->
+        <TextView
+            android:id="@+id/tvSaleTireDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tubeless — 185/65 R15"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_size_normal"
+            android:layout_marginTop="2dp"/>
+
+        <!-- Bottom row: qty + unit price + TOTAL -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/margin_small">
+
+            <TextView
+                android:id="@+id/tvSaleQuantity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Qty: 4"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_normal"/>
+
+            <TextView
+                android:id="@+id/tvSaleUnitPrice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="₹5,500 / unit"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_normal"/>
+
+            <TextView
+                android:id="@+id/tvSaleTotalPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₹22,000"
+                android:textColor="@color/success"
+                android:textSize="@dimen/text_size_medium"
+                android:textStyle="bold"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

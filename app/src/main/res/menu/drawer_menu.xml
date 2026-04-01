@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/menu/drawer_menu.xml -->
+<!-- FILE: app/src/main/res/menu/drawer_menu.xml  (REPLACE) -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
@@ -7,49 +7,48 @@
         <item
             android:id="@+id/drawer_dashboard"
             android:icon="@drawable/ic_dashboard"
-            android:title="@string/nav_dashboard"/>
+            android:title="Dashboard"/>
 
         <item
             android:id="@+id/drawer_stock"
             android:icon="@drawable/ic_stock"
-            android:title="@string/nav_stock"/>
+            android:title="Stock"/>
 
         <item
             android:id="@+id/drawer_sell"
             android:icon="@drawable/ic_sell"
-            android:title="@string/nav_sell"/>
+            android:title="Sell Product"/>
+
+        <item
+            android:id="@+id/drawer_sales_history"
+            android:icon="@drawable/ic_report"
+            android:title="Sales History"/>
 
     </group>
 
     <item android:title="Management">
         <menu>
-
             <item
                 android:id="@+id/drawer_add_company"
                 android:icon="@drawable/ic_company"
-                android:title="@string/nav_add_company"/>
-
+                android:title="Add Company"/>
             <item
                 android:id="@+id/drawer_add_stock"
                 android:icon="@drawable/ic_add"
-                android:title="@string/nav_add_stock"/>
-
+                android:title="Add Stock"/>
         </menu>
     </item>
 
     <item android:title="Settings">
         <menu>
-
             <item
                 android:id="@+id/drawer_theme"
                 android:icon="@drawable/ic_theme"
-                android:title="@string/nav_theme"/>
-
+                android:title="Toggle Theme"/>
             <item
                 android:id="@+id/drawer_logout"
                 android:icon="@drawable/ic_logout"
-                android:title="@string/nav_logout"/>
-
+                android:title="Logout"/>
         </menu>
     </item>
 

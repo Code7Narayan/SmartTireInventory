@@ -1,192 +1,202 @@
-// FILE: network/ApiService.java
+// FILE: app/src/main/java/com/smarttire/inventory/network/ApiService.java  (REPLACE)
 package com.smarttire.inventory.network;
 
 import android.content.Context;
+
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Singleton API service backed by Volley.
+ * All callbacks are delivered on the main thread.
+ */
 public class ApiService {
 
     private static ApiService instance;
-    private RequestQueue requestQueue;
-    private Context context;
+    private final RequestQueue requestQueue;
 
     private ApiService(Context context) {
-        this.context = context.getApplicationContext();
-        requestQueue = Volley.newRequestQueue(this.context);
+        requestQueue = Volley.newRequestQueue(context.getApplicationContext());
     }
 
     public static synchronized ApiService getInstance(Context context) {
-        if (instance == null) {
-            instance = new ApiService(context);
-        }
+        if (instance == null) instance = new ApiService(context);
         return instance;
     }
 
-    // Interface for API callbacks
+    // ── Callback interface ───────────────────────────────────────────────────
+
     public interface ApiCallback {
         void onSuccess(JSONObject response);
         void onError(String error);
     }
 
-    // Login API
-    public void login(String username, String password, final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.POST, ApiConfig.LOGIN,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback)) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("username", username);
-                params.put("password", password);
-                return params;
-            }
-        };
+    // ── Auth ─────────────────────────────────────────────────────────────────
 
-        addToRequestQueue(request);
+    public void login(String username, String password, ApiCallback cb) {
+        postRequest(ApiConfig.LOGIN, params -> {
+            params.put("username", username);
+            params.put("password", password);
+        }, cb);
     }
 
-    // Add Company API
-    public void addCompany(String companyName, final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.POST, ApiConfig.ADD_COMPANY,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback)) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("company_name", companyName);
-                return params;
-            }
-        };
+    // ── Companies ────────────────────────────────────────────────────────────
 
-        addToRequestQueue(request);
+    public void addCompany(String companyName, ApiCallback cb) {
+        postRequest(ApiConfig.ADD_COMPANY, params -> {
+            params.put("company_name", companyName);
+        }, cb);
     }
 
-    // Get Companies API
-    public void getCompanies(final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.GET, ApiConfig.GET_COMPANIES,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback));
-
-        addToRequestQueue(request);
+    public void getCompanies(ApiCallback cb) {
+        getRequest(ApiConfig.GET_COMPANIES, cb);
     }
 
-    // Add Product API
+    // ── Products ─────────────────────────────────────────────────────────────
+
     public void addProduct(int companyId, String tireType, String tireSize,
-                           int quantity, double price, final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.POST, ApiConfig.ADD_PRODUCT,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback)) {
+                           int quantity, double price, ApiCallback cb) {
+        postRequest(ApiConfig.ADD_PRODUCT, params -> {
+            params.put("company_id", String.valueOf(companyId));
+            params.put("tire_type", tireType);
+            params.put("tire_size", tireSize);
+            params.put("quantity", String.valueOf(quantity));
+            params.put("price", String.valueOf(price));
+        }, cb);
+    }
+
+    public void getProducts(ApiCallback cb) {
+        getRequest(ApiConfig.GET_PRODUCTS, cb);
+    }
+
+    // ── Sales ────────────────────────────────────────────────────────────────
+
+    public void sellProduct(int productId, String companyName, String tireType,
+                            String tireSize, int quantity, double unitPrice,
+                            double totalPrice, ApiCallback cb) {
+        postRequest(ApiConfig.SELL_PRODUCT, params -> {
+            params.put("product_id", String.valueOf(productId));
+            params.put("company_name", companyName);
+            params.put("tire_type", tireType);
+            params.put("tire_size", tireSize);
+            params.put("quantity", String.valueOf(quantity));
+            params.put("unit_price", String.valueOf(unitPrice));
+            params.put("total_price", String.valueOf(totalPrice));
+        }, cb);
+    }
+
+    // ── NEW: Sales History ────────────────────────────────────────────────────
+
+    /**
+     * Fetch paginated sales history with optional filters.
+     *
+     * @param search      search term (company / tire type / size), empty = all
+     * @param startDate   "yyyy-MM-dd" or empty for no lower bound
+     * @param endDate     "yyyy-MM-dd" or empty for no upper bound
+     * @param page        1-based page number
+     */
+    public void getSalesHistory(String search, String startDate,
+                                String endDate, int page, ApiCallback cb) {
+
+        // Build query string
+        String url = ApiConfig.GET_SALES_HISTORY
+                + "?page=" + page
+                + "&search=" + android.net.Uri.encode(search)
+                + "&start_date=" + android.net.Uri.encode(startDate)
+                + "&end_date=" + android.net.Uri.encode(endDate);
+
+        getRequest(url, cb);
+    }
+
+    // ── NEW: Monthly Sales Chart Data ─────────────────────────────────────────
+
+    /**
+     * Returns the last {@code months} months of aggregated sales data
+     * for the dashboard bar chart.
+     */
+    public void getMonthlySales(int months, ApiCallback cb) {
+        String url = ApiConfig.GET_MONTHLY_SALES + "?months=" + months;
+        getRequest(url, cb);
+    }
+
+    // ── Dashboard / Low Stock ─────────────────────────────────────────────────
+
+    public void getDashboard(ApiCallback cb) {
+        getRequest(ApiConfig.GET_DASHBOARD, cb);
+    }
+
+    public void getLowStock(ApiCallback cb) {
+        getRequest(ApiConfig.LOW_STOCK, cb);
+    }
+
+    // ── Cancel ───────────────────────────────────────────────────────────────
+
+    public void cancelAllRequests() {
+        requestQueue.cancelAll(r -> true);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    @FunctionalInterface
+    private interface ParamBuilder {
+        void build(Map<String, String> params);
+    }
+
+    private void postRequest(String url, ParamBuilder paramBuilder, ApiCallback cb) {
+        StringRequest req = new StringRequest(Request.Method.POST, url,
+                response -> parseResponse(response, cb),
+                error -> parseError(error, cb)) {
             @Override
             protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("company_id", String.valueOf(companyId));
-                params.put("tire_type", tireType);
-                params.put("tire_size", tireSize);
-                params.put("quantity", String.valueOf(quantity));
-                params.put("price", String.valueOf(price));
-                return params;
+                Map<String, String> p = new HashMap<>();
+                paramBuilder.build(p);
+                return p;
             }
         };
-
-        addToRequestQueue(request);
+        enqueue(req);
     }
 
-    // Get Products API
-    public void getProducts(final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.GET, ApiConfig.GET_PRODUCTS,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback));
-
-        addToRequestQueue(request);
+    private void getRequest(String url, ApiCallback cb) {
+        StringRequest req = new StringRequest(Request.Method.GET, url,
+                response -> parseResponse(response, cb),
+                error -> parseError(error, cb));
+        enqueue(req);
     }
 
-    // Sell Product API - UPDATED to include more fields required by backend
-    public void sellProduct(int productId, String companyName, String tireType, String tireSize,
-                           int quantity, double unitPrice, double totalPrice, final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.POST, ApiConfig.SELL_PRODUCT,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback)) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("product_id", String.valueOf(productId));
-                params.put("company_name", companyName);
-                params.put("tire_type", tireType);
-                params.put("tire_size", tireSize);
-                params.put("quantity", String.valueOf(quantity));
-                params.put("unit_price", String.valueOf(unitPrice));
-                params.put("total_price", String.valueOf(totalPrice));
-                return params;
-            }
-        };
-
-        addToRequestQueue(request);
-    }
-
-    // Get Dashboard API
-    public void getDashboard(final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.GET, ApiConfig.GET_DASHBOARD,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback));
-
-        addToRequestQueue(request);
-    }
-
-    // Get Low Stock API
-    public void getLowStock(final ApiCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.GET, ApiConfig.LOW_STOCK,
-                response -> handleResponse(response, callback),
-                error -> handleError(error, callback));
-
-        addToRequestQueue(request);
-    }
-
-    // Handle successful response
-    private void handleResponse(String response, ApiCallback callback) {
+    private void parseResponse(String raw, ApiCallback cb) {
         try {
-            JSONObject jsonObject = new JSONObject(response);
-            callback.onSuccess(jsonObject);
+            cb.onSuccess(new JSONObject(raw));
         } catch (JSONException e) {
-            callback.onError("Invalid response format");
+            cb.onError("Invalid response from server");
         }
     }
 
-    // Handle error response
-    private void handleError(VolleyError error, ApiCallback callback) {
-        String errorMessage;
+    private void parseError(com.android.volley.VolleyError error, ApiCallback cb) {
+        String msg;
         if (error.networkResponse != null) {
-            errorMessage = "Server error: " + error.networkResponse.statusCode;
+            msg = "Server error " + error.networkResponse.statusCode;
         } else if (error.getMessage() != null) {
-            errorMessage = error.getMessage();
+            msg = error.getMessage();
         } else {
-            errorMessage = "Connection error. Please check your internet connection.";
+            msg = "Connection error. Check your internet connection.";
         }
-        callback.onError(errorMessage);
+        cb.onError(msg);
     }
 
-    // Add request to queue with retry policy
-    private void addToRequestQueue(StringRequest request) {
-        request.setRetryPolicy(new DefaultRetryPolicy(
+    private void enqueue(StringRequest req) {
+        req.setRetryPolicy(new DefaultRetryPolicy(
                 ApiConfig.REQUEST_TIMEOUT,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        ));
-        requestQueue.add(request);
-    }
-
-    // Cancel all pending requests
-    public void cancelAllRequests() {
-        requestQueue.cancelAll(request -> true);
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        requestQueue.add(req);
     }
 }
