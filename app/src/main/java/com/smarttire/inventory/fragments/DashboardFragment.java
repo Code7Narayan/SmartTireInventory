@@ -1,3 +1,4 @@
+// FILE: app/src/main/java/com/smarttire/inventory/fragments/DashboardFragment.java (UPDATED)
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
@@ -6,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,35 +33,25 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Dashboard – shows KPI cards, low-stock list, and a monthly revenue bar chart.
- */
 public class DashboardFragment extends Fragment {
 
     private static final String TAG = "DashboardFragment";
 
-    // ── Views ─────────────────────────────────────────────────────────────────
     private SwipeRefreshLayout swipeRefresh;
     private TextView tvTotalProducts, tvTotalStock, tvLowStock,
-                     tvTotalCompanies, tvTodaySales, tvTotalRevenue;
+                     tvTotalRevenue, tvTotalCustomers, tvTotalOutstanding;
     private TextView tvNoLowStock;
-    private RecyclerView rvLowStock;
+    private RecyclerView rvLowStock, rvTopDebtors;
     private BarChart barChart;
     private CardView cardChartContainer;
 
-    // ── State ─────────────────────────────────────────────────────────────────
     private ApiService apiService;
     private StockAdapter lowStockAdapter;
     private final List<Product> lowStockList = new ArrayList<>();
 
-    /** Track how many parallel loads are pending so refresh stops at the right time. */
     private int pendingLoads = 0;
 
-    // ── Factory ───────────────────────────────────────────────────────────────
-
     public static DashboardFragment newInstance() { return new DashboardFragment(); }
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -79,20 +69,21 @@ public class DashboardFragment extends Fragment {
         loadAll();
     }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-
     private void initViews(View v) {
         swipeRefresh        = v.findViewById(R.id.swipeRefresh);
         tvTotalProducts     = v.findViewById(R.id.tvTotalProducts);
         tvTotalStock        = v.findViewById(R.id.tvTotalStock);
         tvLowStock          = v.findViewById(R.id.tvLowStock);
-        tvTotalCompanies    = v.findViewById(R.id.tvTotalCompanies);
-        tvTodaySales        = v.findViewById(R.id.tvTodaySales);
         tvTotalRevenue      = v.findViewById(R.id.tvTotalRevenue);
+        tvTotalCustomers    = v.findViewById(R.id.tvTotalCustomers);
+        tvTotalOutstanding  = v.findViewById(R.id.tvTotalOutstanding);
         tvNoLowStock        = v.findViewById(R.id.tvNoLowStock);
         rvLowStock          = v.findViewById(R.id.rvLowStock);
+        rvTopDebtors        = v.findViewById(R.id.rvTopDebtors);
         barChart            = v.findViewById(R.id.barChart);
         cardChartContainer  = v.findViewById(R.id.cardChartContainer);
+
+        rvTopDebtors.setLayoutManager(new LinearLayoutManager(requireContext()));
     }
 
     private void setupLowStockList() {
@@ -102,17 +93,14 @@ public class DashboardFragment extends Fragment {
         rvLowStock.setNestedScrollingEnabled(false);
     }
 
-    // ── Load data ─────────────────────────────────────────────────────────────
-
     private void loadAll() {
-        pendingLoads = 3;                 // dashboard + lowStock + monthlySales
+        pendingLoads = 3;
         swipeRefresh.setRefreshing(true);
         loadDashboardStats();
         loadLowStock();
         loadMonthlyChart();
     }
 
-    /** Decrement counter; stop spinner when all 3 calls complete. */
     private void onLoadComplete() {
         if (!isAdded()) return;
         pendingLoads--;
@@ -120,8 +108,6 @@ public class DashboardFragment extends Fragment {
             swipeRefresh.setRefreshing(false);
         }
     }
-
-    // ── Dashboard KPIs ────────────────────────────────────────────────────────
 
     private void loadDashboardStats() {
         apiService.getDashboard(new ApiService.ApiCallback() {
@@ -146,7 +132,6 @@ public class DashboardFragment extends Fragment {
             public void onError(String error) {
                 if (!isAdded()) return;
                 onLoadComplete();
-                Log.e(TAG, "Dashboard API Error: " + error);
             }
         });
     }
@@ -154,9 +139,9 @@ public class DashboardFragment extends Fragment {
     private void bindStats(DashboardStatsModel s) {
         tvTotalProducts.setText(String.valueOf(s.getTotalProducts()));
         tvTotalStock.setText(String.valueOf(s.getTotalStock()));
-        tvTotalCompanies.setText(String.valueOf(s.getTotalCompanies()));
-        tvTodaySales.setText(String.valueOf(s.getTodaySalesCount()));
         tvTotalRevenue.setText(s.getFormattedTodayRevenue());
+        tvTotalCustomers.setText(String.valueOf(s.getTotalCustomers()));
+        tvTotalOutstanding.setText(s.getFormattedTotalOutstanding());
 
         tvLowStock.setText(String.valueOf(s.getLowStockCount()));
         if (s.hasLowStock()) {
@@ -165,8 +150,6 @@ public class DashboardFragment extends Fragment {
             tvLowStock.setTextColor(requireContext().getColor(R.color.success));
         }
     }
-
-    // ── Low Stock ─────────────────────────────────────────────────────────────
 
     private void loadLowStock() {
         apiService.getLowStock(new ApiService.ApiCallback() {
@@ -203,8 +186,6 @@ public class DashboardFragment extends Fragment {
         });
     }
 
-    // ── Monthly Chart ─────────────────────────────────────────────────────────
-
     private void loadMonthlyChart() {
         apiService.getMonthlySales(6, new ApiService.ApiCallback() {
             @Override
@@ -239,7 +220,6 @@ public class DashboardFragment extends Fragment {
             public void onError(String error) {
                 if (!isAdded()) return;
                 onLoadComplete();
-                Log.e(TAG, "Monthly Sales API Error (500 likely): " + error);
                 if (cardChartContainer != null) {
                     cardChartContainer.setVisibility(View.GONE);
                 }
@@ -255,6 +235,7 @@ public class DashboardFragment extends Fragment {
         p.setTireSize(obj.optString("tire_size"));
         p.setQuantity(obj.optInt("quantity"));
         p.setPrice(obj.optDouble("price"));
+        p.setModelName(obj.optString("model_name"));
         return p;
     }
 }

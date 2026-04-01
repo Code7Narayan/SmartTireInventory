@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: app/src/main/res/menu/drawer_menu.xml  (REPLACE) -->
+<!-- FILE: app/src/main/res/menu/drawer_menu.xml  (UPDATED) -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
@@ -18,6 +18,11 @@
             android:id="@+id/drawer_sell"
             android:icon="@drawable/ic_sell"
             android:title="Sell Product"/>
+
+        <item
+            android:id="@+id/drawer_customers"
+            android:icon="@drawable/ic_company"
+            android:title="Customers"/>
 
         <item
             android:id="@+id/drawer_sales_history"

@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: app/src/main/res/values/strings.xml  (REPLACE) -->
+<?xml version="1.0" encoding="utf-8"?><!-- FILE: app/src/main/res/values/strings.xml  (UPDATED) -->
 <resources>
-    <string name="app_name">Anand Tire Inventory</string>
+    <string name="app_name">Smart Tire ERP</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
@@ -36,6 +35,9 @@
     <string name="total_revenue">Total Revenue</string>
     <string name="monthly_revenue_chart">Monthly Revenue (Last 6 Months)</string>
     <string name="no_low_stock">✓ All products are well stocked</string>
+    <string name="total_customers">Total Customers</string>
+    <string name="total_outstanding">Total Outstanding</string>
+    <string name="top_debtors">Top Debtors</string>
 
     <!-- Stock Screen -->
     <string name="stock_title">Inventory Stock</string>
@@ -45,13 +47,39 @@
     <!-- Sell Screen -->
     <string name="sell_title">Sell Product</string>
     <string name="select_product">Select Product</string>
+    <string name="select_customer">Select Customer</string>
     <string name="enter_quantity">Enter Quantity</string>
     <string name="quantity">Quantity</string>
     <string name="available_stock">Available Stock</string>
     <string name="unit_price">Unit Price</string>
     <string name="total_price">Total Price</string>
+    <string name="paid_amount">Paid Amount</string>
+    <string name="remaining_amount">Remaining Amount</string>
     <string name="sell_now">Sell Now</string>
     <string name="generate_invoice">Generate Invoice PDF</string>
+
+    <!-- Customer Screen -->
+    <string name="customer_title">Customers</string>
+    <string name="add_customer">Add Customer</string>
+    <string name="customer_name">Customer Name</string>
+    <string name="customer_phone">Phone Number</string>
+    <string name="customer_address">Address</string>
+    <string name="save_customer">Save Customer</string>
+    <string name="search_customer">Search customer…</string>
+
+    <!-- Add Stock -->
+    <string name="add_stock_title">Add New Stock</string>
+    <string name="select_company">Select Company</string>
+    <string name="tire_type">Tire Type</string>
+    <string name="select_tire_type">Select tire type</string>
+    <string name="tire_size">Tire Size</string>
+    <string name="model_name">Model Name</string>
+    <string name="enter_model_name">Enter model name</string>
+    <string name="enter_tire_size">Enter tire size (e.g., 185/65 R15)</string>
+    <string name="enter_quantity_hint">Enter quantity</string>
+    <string name="price">Price</string>
+    <string name="enter_price">Enter price per tire</string>
+    <string name="save_stock">Save Stock</string>
 
     <!-- Sales History -->
     <string name="sales_history_title">Sales History</string>
@@ -71,18 +99,6 @@
     <string name="company_name">Company Name</string>
     <string name="enter_company_name">Enter company name</string>
     <string name="save_company">Save Company</string>
-
-    <!-- Add Stock -->
-    <string name="add_stock_title">Add New Stock</string>
-    <string name="select_company">Select Company</string>
-    <string name="tire_type">Tire Type</string>
-    <string name="select_tire_type">Select tire type</string>
-    <string name="tire_size">Tire Size</string>
-    <string name="enter_tire_size">Enter tire size (e.g., 185/65 R15)</string>
-    <string name="enter_quantity_hint">Enter quantity</string>
-    <string name="price">Price</string>
-    <string name="enter_price">Enter price per tire</string>
-    <string name="save_stock">Save Stock</string>
 
     <!-- Tire Types -->
     <string-array name="tire_types">

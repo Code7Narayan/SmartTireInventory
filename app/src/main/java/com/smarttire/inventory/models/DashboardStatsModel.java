@@ -1,4 +1,4 @@
-// FILE: app/src/main/java/com/smarttire/inventory/models/DashboardStatsModel.java
+// FILE: app/src/main/java/com/smarttire/inventory/models/DashboardStatsModel.java (UPDATED)
 package com.smarttire.inventory.models;
 
 import org.json.JSONObject;
@@ -18,37 +18,50 @@ public class DashboardStatsModel {
     private final int    todaySalesCount;
     private final double todayRevenue;
     private final double totalRevenue;
+    private final int    totalCustomers;
+    private final double totalOutstanding;
 
     private DashboardStatsModel(Builder b) {
-        this.totalProducts   = b.totalProducts;
-        this.totalStock      = b.totalStock;
-        this.lowStockCount   = b.lowStockCount;
-        this.totalCompanies  = b.totalCompanies;
-        this.todaySalesCount = b.todaySalesCount;
-        this.todayRevenue    = b.todayRevenue;
-        this.totalRevenue    = b.totalRevenue;
+        this.totalProducts    = b.totalProducts;
+        this.totalStock       = b.totalStock;
+        this.lowStockCount    = b.lowStockCount;
+        this.totalCompanies   = b.totalCompanies;
+        this.todaySalesCount  = b.todaySalesCount;
+        this.todayRevenue     = b.todayRevenue;
+        this.totalRevenue     = b.totalRevenue;
+        this.totalCustomers   = b.totalCustomers;
+        this.totalOutstanding = b.totalOutstanding;
     }
 
     // ── Accessors ────────────────────────────────────────────────────────────
 
-    public int    getTotalProducts()   { return totalProducts; }
-    public int    getTotalStock()      { return totalStock; }
-    public int    getLowStockCount()   { return lowStockCount; }
-    public int    getTotalCompanies()  { return totalCompanies; }
-    public int    getTodaySalesCount() { return todaySalesCount; }
-    public double getTodayRevenue()    { return todayRevenue; }
-    public double getTotalRevenue()    { return totalRevenue; }
+    public int    getTotalProducts()    { return totalProducts; }
+    public int    getTotalStock()       { return totalStock; }
+    public int    getLowStockCount()    { return lowStockCount; }
+    public int    getTotalCompanies()   { return totalCompanies; }
+    public int    getTodaySalesCount()  { return todaySalesCount; }
+    public double getTodayRevenue()     { return todayRevenue; }
+    public double getTotalRevenue()     { return totalRevenue; }
+    public int    getTotalCustomers()   { return totalCustomers; }
+    public double getTotalOutstanding() { return totalOutstanding; }
 
     public boolean hasLowStock() { return lowStockCount > 0; }
 
     public String getFormattedTodayRevenue() {
-        return NumberFormat.getCurrencyInstance(new Locale("en", "IN"))
-                .format(todayRevenue);
+        return formatCurrency(todayRevenue);
     }
 
     public String getFormattedTotalRevenue() {
+        return formatCurrency(totalRevenue);
+    }
+
+    public String getFormattedTotalOutstanding() {
+        return formatCurrency(totalOutstanding);
+    }
+
+    private String formatCurrency(double amount) {
         return NumberFormat.getCurrencyInstance(new Locale("en", "IN"))
-                .format(totalRevenue);
+                .format(amount);
     }
 
     // ── Factory from JSON ────────────────────────────────────────────────────
@@ -66,27 +79,33 @@ public class DashboardStatsModel {
                 .todaySalesCount(data.optInt("today_sales_count", 0))
                 .todayRevenue(todayRev)
                 .totalRevenue(data.optDouble("total_revenue", 0.0))
+                .totalCustomers(data.optInt("total_customers", 0))
+                .totalOutstanding(data.optDouble("total_outstanding", 0.0))
                 .build();
     }
 
     // ── Builder ──────────────────────────────────────────────────────────────
 
     public static class Builder {
-        private int    totalProducts   = 0;
-        private int    totalStock      = 0;
-        private int    lowStockCount   = 0;
-        private int    totalCompanies  = 0;
-        private int    todaySalesCount = 0;
-        private double todayRevenue    = 0.0;
-        private double totalRevenue    = 0.0;
+        private int    totalProducts    = 0;
+        private int    totalStock       = 0;
+        private int    lowStockCount    = 0;
+        private int    totalCompanies   = 0;
+        private int    todaySalesCount  = 0;
+        private double todayRevenue     = 0.0;
+        private double totalRevenue     = 0.0;
+        private int    totalCustomers   = 0;
+        private double totalOutstanding = 0.0;
 
-        public Builder totalProducts(int v)   { totalProducts = v;   return this; }
-        public Builder totalStock(int v)      { totalStock = v;      return this; }
-        public Builder lowStockCount(int v)   { lowStockCount = v;   return this; }
-        public Builder totalCompanies(int v)  { totalCompanies = v;  return this; }
-        public Builder todaySalesCount(int v) { todaySalesCount = v; return this; }
-        public Builder todayRevenue(double v) { todayRevenue = v;    return this; }
-        public Builder totalRevenue(double v) { totalRevenue = v;    return this; }
+        public Builder totalProducts(int v)    { totalProducts = v;    return this; }
+        public Builder totalStock(int v)       { totalStock = v;       return this; }
+        public Builder lowStockCount(int v)    { lowStockCount = v;    return this; }
+        public Builder totalCompanies(int v)   { totalCompanies = v;   return this; }
+        public Builder todaySalesCount(int v)  { todaySalesCount = v;  return this; }
+        public Builder todayRevenue(double v)  { todayRevenue = v;     return this; }
+        public Builder totalRevenue(double v)  { totalRevenue = v;     return this; }
+        public Builder totalCustomers(int v)   { totalCustomers = v;   return this; }
+        public Builder totalOutstanding(double v) { totalOutstanding = v; return this; }
 
         public DashboardStatsModel build() { return new DashboardStatsModel(this); }
     }

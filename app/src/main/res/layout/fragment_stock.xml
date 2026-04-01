@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_stock.xml -->
+<!-- FILE: res/layout/fragment_stock.xml  (ERP VERSION — REPLACE) -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,26 +8,85 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Search Bar -->
+    <!-- Global Search -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_medium"
+        android:layout_marginHorizontal="@dimen/margin_medium"
+        android:layout_marginTop="@dimen/margin_medium"
         app:startIconDrawable="@drawable/ic_search"
         app:boxStrokeColor="@color/primary">
-
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/search_stock"
+            android:hint="Search stock…"
             android:inputType="text"
             android:maxLines="1"/>
-
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- SwipeRefresh + RecyclerView -->
+    <!-- Filter Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/margin_medium"
+        android:paddingBottom="@dimen/margin_small">
+
+        <!-- Company filter -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:hint="Company"
+            app:boxStrokeColor="@color/primary">
+            <AutoCompleteTextView
+                android:id="@+id/spinnerCompanyFilter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:padding="10dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Model filter -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:hint="Model"
+            app:boxStrokeColor="@color/primary">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etModelFilter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Size filter -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Size"
+            app:boxStrokeColor="@color/primary">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSizeFilter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
+    <!-- List -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
@@ -44,7 +103,6 @@
                 android:padding="@dimen/padding_small"
                 android:clipToPadding="false"/>
 
-            <!-- Empty State -->
             <LinearLayout
                 android:id="@+id/layoutEmpty"
                 android:layout_width="match_parent"
@@ -52,24 +110,20 @@
                 android:orientation="vertical"
                 android:gravity="center"
                 android:visibility="gone">
-
                 <ImageView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
                     android:src="@drawable/ic_stock"
                     android:tint="@color/text_hint"/>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/no_stock"
+                    android:text="No stock found"
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/text_size_medium"
                     android:layout_marginTop="@dimen/margin_medium"/>
-
             </LinearLayout>
 
-            <!-- Progress Bar -->
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
@@ -78,7 +132,6 @@
                 android:visibility="gone"/>
 
         </FrameLayout>
-
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </LinearLayout>

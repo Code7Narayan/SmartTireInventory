@@ -1,4 +1,4 @@
-// FILE: activities/AddStockActivity.java
+// FILE: activities/AddStockActivity.java (UPDATED)
 package com.smarttire.inventory.activities;
 
 import android.os.Bundle;
@@ -24,9 +24,9 @@ import java.util.List;
 public class AddStockActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbar;
-    private TextInputLayout tilCompany, tilTireType, tilTireSize, tilQuantity, tilPrice;
+    private TextInputLayout tilCompany, tilTireType, tilModelName, tilTireSize, tilQuantity, tilPrice;
     private AutoCompleteTextView spinnerCompany, spinnerTireType;
-    private TextInputEditText etTireSize, etQuantity, etPrice;
+    private TextInputEditText etModelName, etTireSize, etQuantity, etPrice;
     private MaterialButton btnSaveStock;
     private LinearProgressIndicator progressBar;
 
@@ -53,11 +53,13 @@ public class AddStockActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         tilCompany = findViewById(R.id.tilCompany);
         tilTireType = findViewById(R.id.tilTireType);
+        tilModelName = findViewById(R.id.tilModelName);
         tilTireSize = findViewById(R.id.tilTireSize);
         tilQuantity = findViewById(R.id.tilQuantity);
         tilPrice = findViewById(R.id.tilPrice);
         spinnerCompany = findViewById(R.id.spinnerCompany);
         spinnerTireType = findViewById(R.id.spinnerTireType);
+        etModelName = findViewById(R.id.etModelName);
         etTireSize = findViewById(R.id.etTireSize);
         etQuantity = findViewById(R.id.etQuantity);
         etPrice = findViewById(R.id.etPrice);
@@ -143,6 +145,7 @@ public class AddStockActivity extends AppCompatActivity {
         // Clear errors
         tilCompany.setError(null);
         tilTireType.setError(null);
+        tilModelName.setError(null);
         tilTireSize.setError(null);
         tilQuantity.setError(null);
         tilPrice.setError(null);
@@ -155,6 +158,13 @@ public class AddStockActivity extends AppCompatActivity {
 
         if (selectedTireType == null || selectedTireType.isEmpty()) {
             tilTireType.setError("Please select tire type");
+            return;
+        }
+
+        String modelName = etModelName.getText().toString().trim();
+        if (modelName.isEmpty()) {
+            tilModelName.setError("Model name is required");
+            etModelName.requestFocus();
             return;
         }
 
@@ -208,7 +218,7 @@ public class AddStockActivity extends AppCompatActivity {
 
         // Make API call
         apiService.addProduct(selectedCompany.getId(), selectedTireType, tireSize,
-                quantity, price, new ApiService.ApiCallback() {
+                modelName, quantity, price, new ApiService.ApiCallback() {
                     @Override
                     public void onSuccess(JSONObject response) {
                         showLoading(false);
@@ -240,6 +250,7 @@ public class AddStockActivity extends AppCompatActivity {
     private void clearForm() {
         spinnerCompany.setText("", false);
         spinnerTireType.setText("", false);
+        etModelName.setText("");
         etTireSize.setText("");
         etQuantity.setText("");
         etPrice.setText("");

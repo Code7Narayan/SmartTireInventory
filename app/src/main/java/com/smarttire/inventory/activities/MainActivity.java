@@ -1,4 +1,4 @@
-// FILE: app/src/main/java/com/smarttire/inventory/activities/MainActivity.java  (REPLACE)
+// FILE: app/src/main/java/com/smarttire/inventory/activities/MainActivity.java  (UPDATED)
 package com.smarttire.inventory.activities;
 
 import android.content.Intent;
@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -38,7 +37,6 @@ public class MainActivity extends AppCompatActivity
     private MaterialToolbar      toolbar;
     private SharedPrefManager    prefManager;
 
-    // Remember last-selected fragment to avoid unnecessary recreations
     private int currentNavId = -1;
 
     @Override
@@ -60,8 +58,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-
     private void initViews() {
         drawerLayout         = findViewById(R.id.drawerLayout);
         navigationView       = findViewById(R.id.navigationView);
@@ -70,7 +66,9 @@ public class MainActivity extends AppCompatActivity
 
         View headerView  = navigationView.getHeaderView(0);
         TextView tvName  = headerView.findViewById(R.id.tvUserName);
-        tvName.setText(prefManager.getFullName());
+        if (tvName != null) {
+            tvName.setText(prefManager.getFullName());
+        }
     }
 
     private void setupToolbar() {
@@ -90,7 +88,7 @@ public class MainActivity extends AppCompatActivity
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == currentNavId) return true;  // already on this tab
+            if (id == currentNavId) return true;
 
             Fragment f      = null;
             String   title  = "";
@@ -114,8 +112,6 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    // ── Fragment loading ──────────────────────────────────────────────────────
-
     private void loadFragment(Fragment fragment, String title) {
         toolbar.setTitle(title);
         getSupportFragmentManager()
@@ -123,8 +119,6 @@ public class MainActivity extends AppCompatActivity
                 .replace(R.id.fragmentContainer, fragment)
                 .commit();
     }
-
-    // ── Drawer navigation ─────────────────────────────────────────────────────
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -139,6 +133,9 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.drawer_sell) {
             bottomNavigationView.setSelectedItemId(R.id.nav_sell);
 
+        } else if (id == R.id.drawer_customers) {
+            startActivity(new Intent(this, CustomerActivity.class));
+
         } else if (id == R.id.drawer_sales_history) {
             bottomNavigationView.setSelectedItemId(R.id.nav_sales_history);
 
@@ -149,10 +146,6 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, AddStockActivity.class));
 
         } else if (id == R.id.drawer_theme) {
-            boolean isDark = ThemeManager.isDarkTheme(this);
-            Toast.makeText(this,
-                    isDark ? "Switching to Light Theme" : "Switching to Dark Theme",
-                    Toast.LENGTH_SHORT).show();
             ThemeManager.toggleTheme(this);
 
         } else if (id == R.id.drawer_logout) {
@@ -162,8 +155,6 @@ public class MainActivity extends AppCompatActivity
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void showLogoutDialog() {
         new AlertDialog.Builder(this)
