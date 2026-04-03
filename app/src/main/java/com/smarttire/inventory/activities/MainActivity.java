@@ -1,4 +1,4 @@
-// FILE: app/src/main/java/com/smarttire/inventory/activities/MainActivity.java  (UPDATED)
+// FILE: activities/MainActivity.java  (UPDATED — handles pre-select product from StockDetail)
 package com.smarttire.inventory.activities;
 
 import android.content.Intent;
@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -51,10 +50,32 @@ public class MainActivity extends AppCompatActivity
         setupNavigationDrawer();
         setupBottomNavigation();
 
+        // Check if launched from StockDetailActivity → open Sell tab
+        boolean openSell = getIntent().getBooleanExtra("open_sell", false);
+
         if (savedInstanceState == null) {
-            loadFragment(new DashboardFragment(), "Dashboard");
-            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
-            currentNavId = R.id.nav_dashboard;
+            if (openSell) {
+                // Pre-select the Sell fragment
+                loadFragment(new SellFragment(), "Sell Product");
+                bottomNavigationView.setSelectedItemId(R.id.nav_sell);
+                currentNavId = R.id.nav_sell;
+            } else {
+                loadFragment(new DashboardFragment(), "Dashboard");
+                bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+                currentNavId = R.id.nav_dashboard;
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Update intent so SellFragment can read extras
+        boolean openSell = intent.getBooleanExtra("open_sell", false);
+        if (openSell) {
+            loadFragment(new SellFragment(), "Sell Product");
+            bottomNavigationView.setSelectedItemId(R.id.nav_sell);
+            currentNavId = R.id.nav_sell;
         }
     }
 
@@ -64,10 +85,11 @@ public class MainActivity extends AppCompatActivity
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         toolbar              = findViewById(R.id.toolbar);
 
-        View headerView  = navigationView.getHeaderView(0);
-        TextView tvName  = headerView.findViewById(R.id.tvUserName);
+        View headerView = navigationView.getHeaderView(0);
+        TextView tvName = headerView.findViewById(R.id.tvUserName);
         if (tvName != null) {
-            tvName.setText(prefManager.getFullName());
+            String fullName = prefManager.getFullName();
+            tvName.setText(fullName != null && !fullName.isEmpty() ? fullName : "Administrator");
         }
     }
 
@@ -90,15 +112,15 @@ public class MainActivity extends AppCompatActivity
             int id = item.getItemId();
             if (id == currentNavId) return true;
 
-            Fragment f      = null;
-            String   title  = "";
+            Fragment f     = null;
+            String   title = "";
 
             if (id == R.id.nav_dashboard) {
                 f = new DashboardFragment(); title = "Dashboard";
             } else if (id == R.id.nav_stock) {
-                f = new StockFragment(); title = "Stock";
+                f = new StockFragment();     title = "Stock";
             } else if (id == R.id.nav_sell) {
-                f = new SellFragment(); title = "Sell Product";
+                f = new SellFragment();      title = "Sell Product";
             } else if (id == R.id.nav_sales_history) {
                 f = new SalesHistoryFragment(); title = "Sales History";
             }
@@ -126,28 +148,20 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.drawer_dashboard) {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
-
         } else if (id == R.id.drawer_stock) {
             bottomNavigationView.setSelectedItemId(R.id.nav_stock);
-
         } else if (id == R.id.drawer_sell) {
             bottomNavigationView.setSelectedItemId(R.id.nav_sell);
-
         } else if (id == R.id.drawer_customers) {
             startActivity(new Intent(this, CustomerActivity.class));
-
         } else if (id == R.id.drawer_sales_history) {
             bottomNavigationView.setSelectedItemId(R.id.nav_sales_history);
-
         } else if (id == R.id.drawer_add_company) {
             startActivity(new Intent(this, AddCompanyActivity.class));
-
         } else if (id == R.id.drawer_add_stock) {
             startActivity(new Intent(this, AddStockActivity.class));
-
         } else if (id == R.id.drawer_theme) {
             ThemeManager.toggleTheme(this);
-
         } else if (id == R.id.drawer_logout) {
             showLogoutDialog();
         }

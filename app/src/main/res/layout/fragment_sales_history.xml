@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: app/src/main/res/layout/fragment_sales_history.xml -->
+<!-- FILE: res/layout/fragment_sales_history.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,74 +8,41 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- ── Summary bar ──────────────────────────────────────────────────── -->
+    <!-- Summary bar -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="0dp"
         app:cardElevation="4dp"
         app:cardBackgroundColor="@color/primary">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="12dp"
             android:gravity="center_vertical">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Total Sales"
-                    android:textColor="#80FFFFFF"
-                    android:textSize="11sp"/>
-
-                <TextView
-                    android:id="@+id/tvSalesSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="— sales"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
-
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Total Sales" android:textColor="#80FFFFFF" android:textSize="11sp"/>
+                <TextView android:id="@+id/tvSalesSummary"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="— sales" android:textColor="@color/white"
+                    android:textSize="16sp" android:textStyle="bold"/>
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="end">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Total Revenue"
-                    android:textColor="#80FFFFFF"
-                    android:textSize="11sp"/>
-
-                <TextView
-                    android:id="@+id/tvSalesTotalRevenue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="₹ —"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
-
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:orientation="vertical" android:gravity="end">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Total Revenue" android:textColor="#80FFFFFF" android:textSize="11sp"/>
+                <TextView android:id="@+id/tvSalesTotalRevenue"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="₹ —" android:textColor="@color/white"
+                    android:textSize="16sp" android:textStyle="bold"/>
             </LinearLayout>
-
         </LinearLayout>
-
     </androidx.cardview.widget.CardView>
 
-    <!-- ── Search bar ───────────────────────────────────────────────────── -->
+    <!-- Search bar -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
@@ -84,7 +51,6 @@
         android:layout_marginTop="@dimen/margin_medium"
         app:startIconDrawable="@drawable/ic_search"
         app:boxStrokeColor="@color/primary">
-
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearchSales"
             android:layout_width="match_parent"
@@ -92,10 +58,9 @@
             android:hint="Search sales…"
             android:inputType="text"
             android:maxLines="1"/>
-
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- ── Filter row ───────────────────────────────────────────────────── -->
+    <!-- Filter row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -103,7 +68,6 @@
         android:padding="@dimen/padding_medium"
         android:gravity="center_vertical">
 
-        <!-- Company filter -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="0dp"
@@ -111,7 +75,6 @@
             android:layout_weight="1"
             android:hint="Company"
             app:boxStrokeColor="@color/primary">
-
             <AutoCompleteTextView
                 android:id="@+id/spinnerCompanyFilter"
                 android:layout_width="match_parent"
@@ -119,10 +82,8 @@
                 android:inputType="none"
                 android:padding="12dp"
                 android:text="All Companies"/>
-
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Date filter button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDateFilter"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -132,10 +93,9 @@
             android:text="Date"
             android:textAllCaps="false"
             app:strokeColor="@color/primary"
-            app:icon="@drawable/ic_report"
+            app:icon="@drawable/ic_history"
             app:iconGravity="textStart"/>
 
-        <!-- Clear filters -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearFilter"
             style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -145,7 +105,6 @@
             android:textAllCaps="false"
             android:visibility="gone"
             app:rippleColor="@color/primary"/>
-
     </LinearLayout>
 
     <!-- Active date range chip -->
@@ -160,7 +119,7 @@
         app:chipBackgroundColor="@color/primary_light"
         app:closeIconVisible="false"/>
 
-    <!-- ── Progress + RecyclerView ──────────────────────────────────────── -->
+    <!-- Progress + list -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -185,7 +144,6 @@
                 android:padding="@dimen/padding_small"
                 android:clipToPadding="false"/>
 
-            <!-- Empty state -->
             <LinearLayout
                 android:id="@+id/layoutEmpty"
                 android:layout_width="match_parent"
@@ -193,13 +151,11 @@
                 android:orientation="vertical"
                 android:gravity="center"
                 android:visibility="gone">
-
                 <ImageView
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:src="@drawable/ic_report"
                     android:tint="@color/text_hint"/>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -207,7 +163,6 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/text_size_medium"
                     android:layout_marginTop="@dimen/margin_medium"/>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -215,11 +170,9 @@
                     android:textColor="@color/text_hint"
                     android:textSize="@dimen/text_size_normal"
                     android:layout_marginTop="4dp"/>
-
             </LinearLayout>
 
         </FrameLayout>
-
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </LinearLayout>

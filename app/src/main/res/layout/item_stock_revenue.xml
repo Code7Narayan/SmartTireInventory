@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/layout/item_stock_revenue.xml -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="6dp"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/padding_small"
+        android:gravity="center_vertical">
+
+        <!-- Rank badge -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            app:cardCornerRadius="14dp"
+            app:cardBackgroundColor="@color/primary_light">
+            <TextView
+                android:id="@+id/tvRevRank"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="@color/primary"
+                android:textSize="@dimen/text_size_small"
+                android:textStyle="bold"
+                android:text="1"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Product info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/margin_small">
+
+            <TextView
+                android:id="@+id/tvRevProduct"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_normal"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Product Name"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/tvRevQtySold"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_small"
+                    android:text="0 sold"/>
+
+                <TextView
+                    android:id="@+id/tvRevOutstanding"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/warning"
+                    android:textSize="@dimen/text_size_small"
+                    android:visibility="gone"
+                    android:text="Due: ₹0"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Revenue -->
+        <TextView
+            android:id="@+id/tvRevRevenue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/success"
+            android:textSize="@dimen/text_size_normal"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:layout_marginStart="@dimen/margin_small"
+            android:text="₹0"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_sell.xml  (ERP VERSION — REPLACE) -->
+<!-- FILE: res/layout/fragment_sell.xml  (FIXED — no duplicate customer name, remaining amount display) -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -23,7 +23,7 @@
             android:textStyle="bold"
             android:layout_marginBottom="@dimen/margin_medium"/>
 
-        <!-- ── Customer Selection ─────────────────────────────────────── -->
+        <!-- ── Customer Selection ──────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -92,7 +92,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Product Selection ──────────────────────────────────────── -->
+        <!-- ── Product Selection ───────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -124,7 +124,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Product Info Card ──────────────────────────────────────── -->
+        <!-- ── Product Info Card ───────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardProductInfo"
             android:layout_width="match_parent"
@@ -173,7 +173,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Quantity ───────────────────────────────────────────────── -->
+        <!-- ── Quantity ─────────────────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -197,7 +197,7 @@
             </com.google.android.material.textfield.TextInputLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Payment ────────────────────────────────────────────────── -->
+        <!-- ── Payment ──────────────────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -226,7 +226,7 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Amount Paid (leave blank for full payment)"
+                    android:hint="Amount Paid (leave blank = full payment)"
                     app:prefixText="₹"
                     app:boxStrokeColor="@color/primary">
                     <com.google.android.material.textfield.TextInputEditText
@@ -235,6 +235,18 @@
                         android:layout_height="wrap_content"
                         android:inputType="numberDecimal"/>
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Remaining amount display (TASK 3 FIX) -->
+                <TextView
+                    android:id="@+id/tvRemainingAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Remaining: ₹0.00"
+                    android:textColor="@color/warning"
+                    android:textSize="@dimen/text_size_small"
+                    android:textStyle="italic"
+                    android:layout_marginTop="4dp"
+                    android:paddingStart="8dp"/>
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
@@ -254,7 +266,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Invoice Details ────────────────────────────────────────── -->
+        <!-- ── Invoice Details (GST only — NO duplicate customer name) ──────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -278,26 +290,12 @@
                     android:textStyle="italic"
                     android:layout_marginBottom="8dp"/>
 
+                <!-- GST Number only — customer name is taken from customer dropdown (no duplication) -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Customer Name for Invoice"
-                    app:boxStrokeColor="@color/primary">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCustomerName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textCapWords"
-                        android:maxLines="1"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_small"
-                    android:hint="GST Number"
+                    android:hint="GST Number (optional)"
                     app:boxStrokeColor="@color/primary">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etGstNumber"
@@ -310,7 +308,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Total Bar ──────────────────────────────────────────────── -->
+        <!-- ── Total Bar ─────────────────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -346,7 +344,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── Sell Button ────────────────────────────────────────────── -->
+        <!-- ── Sell Button ───────────────────────────────────────────────────── -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSell"
             android:layout_width="match_parent"
@@ -358,7 +356,7 @@
             app:icon="@drawable/ic_sell"
             app:iconGravity="textStart"/>
 
-        <!-- ── Invoice Actions ────────────────────────────────────────── -->
+        <!-- ── Invoice Actions ───────────────────────────────────────────────── -->
         <LinearLayout
             android:id="@+id/layoutInvoiceActions"
             android:layout_width="match_parent"

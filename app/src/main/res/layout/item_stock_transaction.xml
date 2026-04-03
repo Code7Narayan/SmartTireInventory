@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/layout/item_stock_transaction.xml -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="6dp"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/padding_small"
+        android:gravity="center_vertical">
+
+        <!-- Type badge -->
+        <TextView
+            android:id="@+id/tvTxType"
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_small"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:text="▲ IN"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/divider"
+            android:layout_marginHorizontal="8dp"/>
+
+        <!-- Info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTxQty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_normal"
+                android:textStyle="bold"
+                android:text="Qty: 0"/>
+
+            <TextView
+                android:id="@+id/tvTxNote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_small"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Note"/>
+
+        </LinearLayout>
+
+        <!-- Date -->
+        <TextView
+            android:id="@+id/tvTxDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_hint"
+            android:textSize="@dimen/text_size_small"
+            android:gravity="end"
+            android:text="—"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

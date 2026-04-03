@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: app/src/main/res/layout/bottom_sheet_sale_detail.xml -->
+<!-- FILE: res/layout/bottom_sheet_sale_detail.xml  (UPDATED — payment summary added) -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,7 +17,7 @@
         android:layout_marginBottom="@dimen/margin_medium"
         android:background="@color/divider"/>
 
-    <!-- Title row -->
+    <!-- Title row: Sale ID + Date -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,6 +36,19 @@
             android:textStyle="bold"/>
 
         <TextView
+            android:id="@+id/tvDetailPaymentStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_card"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="PAID"
+            android:textColor="@color/success"
+            android:textSize="@dimen/text_size_small"
+            android:textStyle="bold"/>
+
+        <TextView
             android:id="@+id/tvDetailDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -46,131 +59,150 @@
     </LinearLayout>
 
     <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider"
-        android:layout_marginBottom="@dimen/margin_medium"/>
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/divider" android:layout_marginBottom="@dimen/margin_medium"/>
+
+    <!-- Customer (shown only if not walk-in) -->
+    <TextView
+        android:id="@+id/tvDetailCustomer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Customer: —"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/text_size_small"
+        android:textStyle="italic"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"/>
 
     <!-- Company -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Company"
-        android:textColor="@color/text_hint"
-        android:textSize="11sp"/>
-    <TextView
-        android:id="@+id/tvDetailCompany"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="MRF"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/text_size_medium"
-        android:textStyle="bold"
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Company" android:textColor="@color/text_hint" android:textSize="11sp"/>
+    <TextView android:id="@+id/tvDetailCompany"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="MRF" android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_medium" android:textStyle="bold"
         android:layout_marginBottom="@dimen/margin_medium"/>
 
     <!-- Tire info -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Product"
-        android:textColor="@color/text_hint"
-        android:textSize="11sp"/>
-    <TextView
-        android:id="@+id/tvDetailTireInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Product" android:textColor="@color/text_hint" android:textSize="11sp"/>
+    <TextView android:id="@+id/tvDetailTireInfo"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:text="Tubeless — 185/65 R15"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/text_size_normal"
+        android:textColor="@color/text_primary" android:textSize="@dimen/text_size_normal"
         android:layout_marginBottom="@dimen/margin_medium"/>
 
-    <!-- Qty + Unit price row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/margin_medium">
+    <!-- Qty + Unit price -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginBottom="@dimen/margin_medium">
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Quantity"
-                android:textColor="@color/text_hint"
-                android:textSize="11sp"/>
-            <TextView
-                android:id="@+id/tvDetailQty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Qty: 4"
-                android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_size_medium"
-                android:textStyle="bold"/>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Quantity" android:textColor="@color/text_hint" android:textSize="11sp"/>
+            <TextView android:id="@+id/tvDetailQty"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Qty: 4" android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_medium" android:textStyle="bold"/>
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Unit Price"
-                android:textColor="@color/text_hint"
-                android:textSize="11sp"/>
-            <TextView
-                android:id="@+id/tvDetailUnitPrice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="₹5,500 / unit"
-                android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_size_medium"
-                android:textStyle="bold"/>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Unit Price" android:textColor="@color/text_hint" android:textSize="11sp"/>
+            <TextView android:id="@+id/tvDetailUnitPrice"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="₹5,500 / unit" android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_medium" android:textStyle="bold"/>
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Total -->
+    <!-- Grand Total bar -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        app:cardCornerRadius="8dp" app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/primary"
+        android:layout_marginBottom="@dimen/margin_medium">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:padding="@dimen/padding_medium"
+            android:gravity="center_vertical">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Grand Total"
+                android:textColor="@color/white" android:textSize="@dimen/text_size_medium"/>
+            <TextView android:id="@+id/tvDetailTotalPrice"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="₹22,000" android:textColor="@color/white"
+                android:textSize="@dimen/text_size_xlarge" android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- ══════════════════════════════════════════════════════
+         PAYMENT SUMMARY BLOCK  (Task 3 — new views)
+         ══════════════════════════════════════════════════════ -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/margin_large"
         app:cardCornerRadius="8dp"
         app:cardElevation="0dp"
-        app:cardBackgroundColor="@color/primary"
-        android:layout_marginBottom="@dimen/margin_large">
+        app:cardBackgroundColor="@color/background">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="@dimen/padding_medium"
-            android:gravity="center_vertical">
+            android:orientation="vertical"
+            android:padding="@dimen/padding_medium">
+
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Grand Total"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_medium"/>
-            <TextView
-                android:id="@+id/tvDetailTotalPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₹22,000"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_xlarge"
-                android:textStyle="bold"/>
-        </LinearLayout>
+                android:text="PAYMENT SUMMARY"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_small"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp"/>
 
+            <!-- Total Amount -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Total Amount"
+                    android:textColor="@color/text_secondary" android:textSize="@dimen/text_size_normal"/>
+                <TextView android:id="@+id/tvDetailTotalAmount"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="₹0" android:textColor="@color/text_primary"
+                    android:textStyle="bold" android:textSize="@dimen/text_size_normal"/>
+            </LinearLayout>
+
+            <!-- Paid Amount -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Paid Amount"
+                    android:textColor="@color/text_secondary" android:textSize="@dimen/text_size_normal"/>
+                <TextView android:id="@+id/tvDetailPaidAmount"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="₹0" android:textColor="@color/success"
+                    android:textStyle="bold" android:textSize="@dimen/text_size_normal"/>
+            </LinearLayout>
+
+            <!-- Remaining Amount -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Remaining Amount"
+                    android:textColor="@color/text_secondary" android:textSize="@dimen/text_size_normal"/>
+                <TextView android:id="@+id/tvDetailRemaining"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="₹0" android:textColor="@color/success"
+                    android:textStyle="bold" android:textSize="@dimen/text_size_normal"/>
+            </LinearLayout>
+
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Invoice button -->
+    <!-- Invoice PDF button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDetailGenerateInvoice"
         android:layout_width="match_parent"

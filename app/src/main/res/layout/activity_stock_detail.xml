@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/layout/activity_stock_detail.xml -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary"
+            app:titleTextColor="@color/white"
+            app:navigationIcon="@drawable/ic_menu"
+            app:navigationIconTint="@color/white"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/layoutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/padding_medium"
+            android:visibility="gone">
+
+            <!-- Product Info Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                app:cardCornerRadius="@dimen/card_corner_radius"
+                app:cardElevation="@dimen/card_elevation"
+                app:cardBackgroundColor="@color/card_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/padding_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Product Information"
+                        android:textColor="@color/primary"
+                        android:textSize="@dimen/text_size_medium"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/margin_small"/>
+
+                    <!-- Company -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="6dp">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Company" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailCompany" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/text_primary" android:textStyle="bold"
+                            android:textSize="@dimen/text_size_normal" android:text="—"/>
+                    </LinearLayout>
+
+                    <!-- Model -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="6dp">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Model Name" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailModel" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/text_primary" android:textStyle="bold"
+                            android:textSize="@dimen/text_size_normal" android:text="—"/>
+                    </LinearLayout>
+
+                    <!-- Tire Type -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="6dp">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Tire Type" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailTireType" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/text_primary" android:textSize="@dimen/text_size_normal"
+                            android:text="—"/>
+                    </LinearLayout>
+
+                    <!-- Tire Size -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="6dp">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Tire Size" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailTireSize" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/text_primary" android:textSize="@dimen/text_size_normal"
+                            android:text="—"/>
+                    </LinearLayout>
+
+                    <!-- Price -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="6dp">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Unit Price" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailPrice" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/success" android:textStyle="bold"
+                            android:textSize="@dimen/text_size_normal" android:text="₹0"/>
+                    </LinearLayout>
+
+                    <!-- Added date -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                            android:text="Added On" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                        <TextView android:id="@+id/tvDetailAddedDate" android:layout_width="0dp"
+                            android:layout_height="wrap_content" android:layout_weight="1"
+                            android:textColor="@color/text_hint" android:textSize="@dimen/text_size_small"
+                            android:text="—"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Stock Summary Cards -->
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3"
+                android:useDefaultMargins="true"
+                android:layout_marginBottom="@dimen/margin_medium">
+
+                <!-- Total Added -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp" android:layout_height="80dp"
+                    android:layout_columnWeight="1"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardBackgroundColor="@color/card_background" app:cardElevation="2dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvDetailTotalAdded"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="0" android:textSize="@dimen/text_size_xlarge"
+                            android:textStyle="bold" android:textColor="@color/info"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Total Added" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Total Sold -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp" android:layout_height="80dp"
+                    android:layout_columnWeight="1"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardBackgroundColor="@color/card_background" app:cardElevation="2dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvDetailTotalSold"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="0" android:textSize="@dimen/text_size_xlarge"
+                            android:textStyle="bold" android:textColor="@color/warning"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Total Sold" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Current Stock -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp" android:layout_height="80dp"
+                    android:layout_columnWeight="1"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardBackgroundColor="@color/card_background" app:cardElevation="2dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tvDetailCurrentStock"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="0" android:textSize="@dimen/text_size_xlarge"
+                            android:textStyle="bold" android:textColor="@color/success"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="In Stock" android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_small"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </GridLayout>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/margin_medium">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDetailSell"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="Sell This Product"
+                    android:textAllCaps="false"
+                    app:cornerRadius="@dimen/button_corner_radius"
+                    app:backgroundTint="@color/primary"
+                    app:icon="@drawable/ic_sell"
+                    app:iconGravity="textStart"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDetailExportPdf"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="Export PDF"
+                    android:textAllCaps="false"
+                    app:cornerRadius="@dimen/button_corner_radius"
+                    app:strokeColor="@color/primary"
+                    app:icon="@drawable/ic_pdf"
+                    app:iconGravity="textStart"/>
+
+            </LinearLayout>
+
+            <!-- Transaction History -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stock Movement History"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_large"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/margin_small"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDetailTransactions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

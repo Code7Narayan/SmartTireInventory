@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/item_stock.xml -->
+<!-- FILE: res/layout/item_stock.xml  (ENHANCED — model name, low stock, clickable detail) -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/margin_small"
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginBottom="@dimen/margin_small"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     app:cardCornerRadius="@dimen/card_corner_radius"
     app:cardElevation="2dp"
     app:cardBackgroundColor="@color/card_background">
@@ -33,6 +37,7 @@
             android:layout_marginStart="@dimen/margin_medium"
             android:layout_gravity="center_vertical">
 
+            <!-- Company -->
             <TextView
                 android:id="@+id/tvCompanyName"
                 android:layout_width="wrap_content"
@@ -42,6 +47,18 @@
                 android:textStyle="bold"
                 android:text="MRF"/>
 
+            <!-- Model Name (NEW — clearly shown) -->
+            <TextView
+                android:id="@+id/tvModelName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_small"
+                android:textStyle="italic"
+                android:visibility="gone"
+                android:text="Model"/>
+
+            <!-- Tire details -->
             <TextView
                 android:id="@+id/tvTireDetails"
                 android:layout_width="wrap_content"
@@ -104,6 +121,16 @@
                 android:layout_marginTop="4dp"/>
 
         </LinearLayout>
+
+        <!-- Chevron arrow to indicate tappable -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_menu"
+            android:tint="@color/text_hint"
+            android:rotation="270"/>
 
     </LinearLayout>
 

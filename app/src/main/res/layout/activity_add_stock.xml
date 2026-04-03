@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/activity_add_stock.xml (UPDATED) -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,27 +6,31 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <!-- Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="@string/add_stock_title"
+            app:title="Add Stock"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_menu"
             app:navigationIconTint="@color/white"/>
-
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/white"
+            app:trackColor="@color/primary_light"/>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -36,162 +39,121 @@
             android:orientation="vertical"
             android:padding="@dimen/padding_medium">
 
-            <!-- Stock Form Card -->
-            <androidx.cardview.widget.CardView
+            <!-- Company Selection -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilCompany"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation"
-                app:cardBackgroundColor="@color/card_background">
-
-                <LinearLayout
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Select Company"
+                app:startIconDrawable="@drawable/ic_company">
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerCompany"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/padding_large">
+                    android:inputType="none"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Company Dropdown -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilCompany"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <!-- Tire Type Selection -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTireType"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Tire Type"
+                app:startIconDrawable="@drawable/ic_tire">
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerTireType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Model Name -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilModelName"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Model Name">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etModelName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapWords"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Tire Size -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTireSize"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Tire Size (e.g. 145/80 R12)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTireSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapCharacters"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Quantity & Price -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilQuantity"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="@dimen/margin_medium"
+                    android:hint="Quantity"
+                    app:startIconDrawable="@drawable/ic_stock">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etQuantity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/select_company"
-                        app:startIconDrawable="@drawable/ic_company"
-                        app:boxStrokeColor="@color/primary">
+                        android:inputType="number"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <AutoCompleteTextView
-                            android:id="@+id/spinnerCompany"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="none"
-                            android:padding="@dimen/padding_medium"/>
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Tire Type Dropdown -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilTireType"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPrice"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="@dimen/margin_medium"
+                    android:hint="Unit Price (₹)"
+                    app:startIconDrawable="@drawable/ic_money">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPrice"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:hint="@string/tire_type"
-                        app:startIconDrawable="@drawable/ic_tire"
-                        app:boxStrokeColor="@color/primary">
+                        android:inputType="numberDecimal"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <AutoCompleteTextView
-                            android:id="@+id/spinnerTireType"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="none"
-                            android:padding="@dimen/padding_medium"/>
+            </LinearLayout>
 
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Model Name Input -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilModelName"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:hint="@string/model_name"
-                        app:boxStrokeColor="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etModelName"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:maxLines="1"/>
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Tire Size Input -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilTireSize"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:hint="@string/tire_size"
-                        app:boxStrokeColor="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etTireSize"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:maxLines="1"/>
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Quantity Input -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilQuantity"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:hint="@string/quantity"
-                        app:boxStrokeColor="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etQuantity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number"/>
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Price Input -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilPrice"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:hint="@string/price"
-                        app:prefixText="₹"
-                        app:boxStrokeColor="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etPrice"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="numberDecimal"/>
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Save Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSaveStock"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/button_height"
-                        android:layout_marginTop="@dimen/margin_large"
-                        android:text="@string/save_stock"
-                        android:textAllCaps="false"
-                        app:cornerRadius="@dimen/button_corner_radius"
-                        app:backgroundTint="@color/primary"
-                        app:icon="@drawable/ic_add"
-                        app:iconGravity="textStart"/>
-
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
-                        android:id="@+id/progressBar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_medium"
-                        android:visibility="gone"
-                        android:indeterminate="true"
-                        app:indicatorColor="@color/primary"/>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveStock"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_marginTop="@dimen/margin_large"
+                android:text="Save Stock"
+                android:textAllCaps="false"
+                app:cornerRadius="@dimen/button_corner_radius"
+                app:backgroundTint="@color/primary"/>
 
         </LinearLayout>
-
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

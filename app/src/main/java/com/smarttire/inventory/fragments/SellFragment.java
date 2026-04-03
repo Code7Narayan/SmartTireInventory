@@ -1,4 +1,6 @@
-// FILE: fragments/SellFragment.java  (ERP VERSION — FULL REPLACEMENT)
+// FILE: fragments/SellFragment.java
+// KEY FIX (Task 3/5): Sale object now carries paidAmount, remainingAmount,
+//   paymentStatus and customerName so PdfGenerator shows them correctly.
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
@@ -42,38 +44,40 @@ import java.util.Locale;
 
 public class SellFragment extends Fragment {
 
-    // ── Views ─────────────────────────────────────────────────────────────────
     private AutoCompleteTextView    spinnerProduct, spinnerCustomer, spinnerPayMode;
     private CardView                cardProductInfo, cardCustomerCredit;
-    private TextView                tvAvailableStock, tvUnitPrice, tvTotalPrice;
+    private TextView                tvAvailableStock, tvUnitPrice, tvTotalPrice, tvRemainingAmount;
     private TextView                tvCustomerDue;
     private TextInputLayout         tilQuantity, tilPaid;
-    private TextInputEditText       etQuantity, etPaidAmount, etCustomerName, etGstNumber;
+    private TextInputEditText       etQuantity, etPaidAmount, etGstNumber;
     private MaterialButton          btnSell, btnAddCustomer, btnGenerateInvoice, btnShareInvoice;
     private LinearProgressIndicator progressBar;
     private LinearLayout            layoutInvoiceActions;
 
-    // ── State ─────────────────────────────────────────────────────────────────
-    private ApiService       api;
-    private List<Product>    productList  = new ArrayList<>();
-    private List<Customer>   customerList = new ArrayList<>();
-    private Product          selectedProduct;
-    private Customer         selectedCustomer;
-    private Sale             lastSale;
-    private File             lastPdfFile;
+    private ApiService     api;
+    private List<Product>  productList  = new ArrayList<>();
+    private List<Customer> customerList = new ArrayList<>();
+    private Product        selectedProduct;
+    private Customer       selectedCustomer;
+    private Sale           lastSale;
+    private File           lastPdfFile;
+
+    private int    preselectProductId = -1;
 
     public static SellFragment newInstance() { return new SellFragment(); }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_sell, container, false);
+    public View onCreateView(@NonNull LayoutInflater i, ViewGroup g, Bundle s) {
+        return i.inflate(R.layout.fragment_sell, g, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         api = ApiService.getInstance(requireContext());
+        if (getActivity() != null)
+            preselectProductId = getActivity().getIntent().getIntExtra("preselect_product_id", -1);
+
         initViews(view);
         setupListeners();
         loadProducts();
@@ -81,34 +85,32 @@ public class SellFragment extends Fragment {
     }
 
     private void initViews(View v) {
-        spinnerProduct      = v.findViewById(R.id.spinnerProduct);
-        spinnerCustomer     = v.findViewById(R.id.spinnerCustomer);
-        spinnerPayMode      = v.findViewById(R.id.spinnerPaymentMode);
-        cardProductInfo     = v.findViewById(R.id.cardProductInfo);
-        cardCustomerCredit  = v.findViewById(R.id.cardCustomerCredit);
-        tvAvailableStock    = v.findViewById(R.id.tvAvailableStock);
-        tvUnitPrice         = v.findViewById(R.id.tvUnitPrice);
-        tvTotalPrice        = v.findViewById(R.id.tvTotalPrice);
-        tvCustomerDue       = v.findViewById(R.id.tvCustomerDue);
-        tilQuantity         = v.findViewById(R.id.tilQuantity);
-        tilPaid             = v.findViewById(R.id.tilPaid);
-        etQuantity          = v.findViewById(R.id.etQuantity);
-        etPaidAmount        = v.findViewById(R.id.etPaidAmount);
-        etCustomerName      = v.findViewById(R.id.etCustomerName);
-        etGstNumber         = v.findViewById(R.id.etGstNumber);
-        btnSell             = v.findViewById(R.id.btnSell);
-        btnAddCustomer      = v.findViewById(R.id.btnAddCustomer);
-        btnGenerateInvoice  = v.findViewById(R.id.btnGenerateInvoice);
-        btnShareInvoice     = v.findViewById(R.id.btnShareInvoice);
-        progressBar         = v.findViewById(R.id.progressBar);
-        layoutInvoiceActions= v.findViewById(R.id.layoutInvoiceActions);
+        spinnerProduct     = v.findViewById(R.id.spinnerProduct);
+        spinnerCustomer    = v.findViewById(R.id.spinnerCustomer);
+        spinnerPayMode     = v.findViewById(R.id.spinnerPaymentMode);
+        cardProductInfo    = v.findViewById(R.id.cardProductInfo);
+        cardCustomerCredit = v.findViewById(R.id.cardCustomerCredit);
+        tvAvailableStock   = v.findViewById(R.id.tvAvailableStock);
+        tvUnitPrice        = v.findViewById(R.id.tvUnitPrice);
+        tvTotalPrice       = v.findViewById(R.id.tvTotalPrice);
+        tvRemainingAmount  = v.findViewById(R.id.tvRemainingAmount);
+        tvCustomerDue      = v.findViewById(R.id.tvCustomerDue);
+        tilQuantity        = v.findViewById(R.id.tilQuantity);
+        tilPaid            = v.findViewById(R.id.tilPaid);
+        etQuantity         = v.findViewById(R.id.etQuantity);
+        etPaidAmount       = v.findViewById(R.id.etPaidAmount);
+        etGstNumber        = v.findViewById(R.id.etGstNumber);
+        btnSell            = v.findViewById(R.id.btnSell);
+        btnAddCustomer     = v.findViewById(R.id.btnAddCustomer);
+        btnGenerateInvoice = v.findViewById(R.id.btnGenerateInvoice);
+        btnShareInvoice    = v.findViewById(R.id.btnShareInvoice);
+        progressBar        = v.findViewById(R.id.progressBar);
+        layoutInvoiceActions = v.findViewById(R.id.layoutInvoiceActions);
 
-        // Payment modes
         String[] modes = {"cash","upi","card","bank_transfer","cheque"};
         spinnerPayMode.setAdapter(new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_dropdown_item_1line, modes));
         spinnerPayMode.setText(modes[0], false);
-
         if (layoutInvoiceActions != null) layoutInvoiceActions.setVisibility(View.GONE);
     }
 
@@ -117,31 +119,22 @@ public class SellFragment extends Fragment {
             selectedProduct = productList.get(pos);
             updateProductInfo();
         });
-
         spinnerCustomer.setOnItemClickListener((p, v, pos, id) -> {
             selectedCustomer = customerList.get(pos);
             updateCustomerInfo();
         });
+        etQuantity.addTextChangedListener(simpleWatcher(() -> { calculateTotal(); validatePaid(); }));
+        etPaidAmount.addTextChangedListener(simpleWatcher(this::validatePaid));
 
-        etQuantity.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
-            @Override public void afterTextChanged(Editable s) {}
-            @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
-                calculateTotal();
-            }
-        });
-
-        btnAddCustomer.setOnClickListener(v ->
-                startActivity(new android.content.Intent(
-                        requireContext(),
+        btnAddCustomer.setOnClickListener(v -> startActivity(
+                new android.content.Intent(requireContext(),
                         com.smarttire.inventory.activities.AddCustomerActivity.class)));
-
         btnSell.setOnClickListener(v -> performSell());
         if (btnGenerateInvoice != null) btnGenerateInvoice.setOnClickListener(v -> openInvoice());
         if (btnShareInvoice    != null) btnShareInvoice.setOnClickListener(v -> shareInvoice());
     }
 
-    // ── Load data ─────────────────────────────────────────────────────────────
+    // ── Load ──────────────────────────────────────────────────────────────────
 
     private void loadProducts() {
         showLoading(true);
@@ -157,6 +150,17 @@ public class SellFragment extends Fragment {
                             productList.add(parseProduct(data.getJSONObject(i)));
                         spinnerProduct.setAdapter(new ArrayAdapter<>(requireContext(),
                                 android.R.layout.simple_dropdown_item_1line, productList));
+                        if (preselectProductId > 0) {
+                            for (int i = 0; i < productList.size(); i++) {
+                                if (productList.get(i).getId() == preselectProductId) {
+                                    selectedProduct = productList.get(i);
+                                    spinnerProduct.setText(selectedProduct.toString(), false);
+                                    updateProductInfo();
+                                    preselectProductId = -1;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 } catch (Exception e) { e.printStackTrace(); }
             }
@@ -180,7 +184,6 @@ public class SellFragment extends Fragment {
                             customerList.add(Customer.fromJSON(data.getJSONObject(i)));
                         spinnerCustomer.setAdapter(new ArrayAdapter<>(requireContext(),
                                 android.R.layout.simple_dropdown_item_1line, customerList));
-                        // Default: Walk-in
                         if (!customerList.isEmpty()) {
                             selectedCustomer = customerList.get(0);
                             spinnerCustomer.setText(customerList.get(0).toString(), false);
@@ -188,11 +191,11 @@ public class SellFragment extends Fragment {
                     }
                 } catch (Exception e) { e.printStackTrace(); }
             }
-            @Override public void onError(String err) { /* non-critical */ }
+            @Override public void onError(String err) {}
         });
     }
 
-    // ── UI updates ────────────────────────────────────────────────────────────
+    // ── UI helpers ────────────────────────────────────────────────────────────
 
     private void updateProductInfo() {
         if (selectedProduct == null) { cardProductInfo.setVisibility(View.GONE); return; }
@@ -212,75 +215,118 @@ public class SellFragment extends Fragment {
 
     private void calculateTotal() {
         if (selectedProduct == null) { tvTotalPrice.setText("₹0.00"); return; }
-        String qs = etQuantity.getText() != null ? etQuantity.getText().toString().trim() : "";
+        String qs = txt(etQuantity);
         if (!qs.isEmpty()) {
             try {
-                double total = Integer.parseInt(qs) * selectedProduct.getPrice();
-                tvTotalPrice.setText(
-                        NumberFormat.getCurrencyInstance(new Locale("en","IN")).format(total));
+                tvTotalPrice.setText(inr(Integer.parseInt(qs) * selectedProduct.getPrice()));
                 return;
             } catch (NumberFormatException ignored) {}
         }
         tvTotalPrice.setText("₹0.00");
     }
 
+    private void validatePaid() {
+        if (selectedProduct == null || tilPaid == null) return;
+        String qs = txt(etQuantity);
+        if (qs.isEmpty()) return;
+        double total;
+        try { total = Integer.parseInt(qs) * selectedProduct.getPrice(); }
+        catch (NumberFormatException e) { return; }
+
+        String ps = txt(etPaidAmount);
+        if (ps.isEmpty()) {
+            tilPaid.setError(null);
+            if (tvRemainingAmount != null) tvRemainingAmount.setText("Remaining: ₹0.00 (Full)");
+            return;
+        }
+        double paid;
+        try { paid = Double.parseDouble(ps); }
+        catch (NumberFormatException e) { tilPaid.setError("Invalid"); return; }
+
+        if (paid > total + 0.005) {
+            tilPaid.setError("Cannot exceed total " + inr(total));
+            if (tvRemainingAmount != null) tvRemainingAmount.setText("Remaining: —");
+        } else {
+            tilPaid.setError(null);
+            if (tvRemainingAmount != null) tvRemainingAmount.setText("Remaining: " + inr(total - paid));
+        }
+    }
+
     // ── Sell ──────────────────────────────────────────────────────────────────
 
     private void performSell() {
-        tilQuantity.setError(null); tilPaid.setError(null);
+        if (tilQuantity != null) tilQuantity.setError(null);
+        if (tilPaid     != null) tilPaid.setError(null);
 
         if (selectedProduct == null) {
             Toast.makeText(requireContext(), "Select a product", Toast.LENGTH_SHORT).show(); return;
         }
 
-        String qs = etQuantity.getText() != null ? etQuantity.getText().toString().trim() : "";
-        if (qs.isEmpty()) { tilQuantity.setError("Required"); return; }
+        String qs = txt(etQuantity);
+        if (qs.isEmpty()) { if(tilQuantity!=null) tilQuantity.setError("Required"); return; }
 
-        int quantity;
-        try { quantity = Integer.parseInt(qs); }
-        catch (NumberFormatException e) { tilQuantity.setError("Invalid"); return; }
-        if (quantity <= 0)                        { tilQuantity.setError("Must be > 0"); return; }
-        if (quantity > selectedProduct.getQuantity()) {
-            tilQuantity.setError("Only " + selectedProduct.getQuantity() + " available"); return;
+        int qty;
+        try { qty = Integer.parseInt(qs); }
+        catch (NumberFormatException e) { if(tilQuantity!=null) tilQuantity.setError("Invalid"); return; }
+
+        if (qty <= 0) { if(tilQuantity!=null) tilQuantity.setError("Must be > 0"); return; }
+        if (qty > selectedProduct.getQuantity()) {
+            if(tilQuantity!=null) tilQuantity.setError("Only " + selectedProduct.getQuantity() + " available");
+            return;
         }
 
-        double totalPrice = quantity * selectedProduct.getPrice();
-        String ps = etPaidAmount.getText() != null ? etPaidAmount.getText().toString().trim() : "";
-        double paidAmount = ps.isEmpty() ? totalPrice : Double.parseDouble(ps); // full if blank
+        double total = qty * selectedProduct.getPrice();
+        String ps    = txt(etPaidAmount);
+        double paid;
 
-        int customerId = selectedCustomer != null
-                ? selectedCustomer.getId() : ApiConfig.WALK_IN_CUSTOMER_ID;
-        String mode  = spinnerPayMode.getText().toString();
-        String gst   = etGstNumber.getText() != null ? etGstNumber.getText().toString().trim() : "";
+        if (ps.isEmpty()) {
+            paid = total;
+        } else {
+            try { paid = Double.parseDouble(ps); }
+            catch (NumberFormatException e) {
+                if(tilPaid!=null) tilPaid.setError("Invalid"); return;
+            }
+            if (paid < 0) { if(tilPaid!=null) tilPaid.setError("Cannot be negative"); return; }
+            if (paid > total + 0.005) {
+                if(tilPaid!=null) tilPaid.setError("Cannot exceed " + inr(total)); return;
+            }
+        }
+
+        int    custId = selectedCustomer != null ? selectedCustomer.getId() : ApiConfig.WALK_IN_CUSTOMER_ID;
+        String mode   = spinnerPayMode.getText().toString();
+        String gst    = txt(etGstNumber);
 
         showLoading(true);
-
-        api.sellProduct(selectedProduct.getId(), customerId, quantity,
-                paidAmount, mode, gst, new ApiService.ApiCallback() {
+        api.sellProduct(selectedProduct.getId(), custId, qty, paid, mode, gst,
+                new ApiService.ApiCallback() {
                     @Override public void onSuccess(JSONObject r) {
                         if (!isAdded()) return;
                         showLoading(false);
                         try {
                             if (r.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                                JSONObject data = r.optJSONObject(ApiConfig.KEY_DATA);
-                                if (data != null) {
+                                JSONObject d = r.optJSONObject(ApiConfig.KEY_DATA);
+                                if (d != null) {
+                                    // ── Populate ALL payment fields on Sale (Task 3/5 core fix) ──
                                     lastSale = new Sale();
-                                    lastSale.setSaleId(data.optInt("sale_id"));
-                                    lastSale.setCompanyName(data.optString("company_name"));
-                                    lastSale.setTireType(data.optString("tire_type"));
-                                    lastSale.setTireSize(data.optString("tire_size"));
-                                    lastSale.setQuantity(data.optInt("quantity_sold"));
-                                    lastSale.setUnitPrice(data.optDouble("unit_price"));
-                                    lastSale.setTotalPrice(data.optDouble("total_price"));
-                                    lastSale.setRemainingStock(data.optInt("remaining_stock"));
+                                    lastSale.setSaleId(d.optInt("sale_id"));
+                                    lastSale.setCompanyName(d.optString("company_name"));
+                                    lastSale.setTireType(d.optString("tire_type"));
+                                    lastSale.setTireSize(d.optString("tire_size"));
+                                    lastSale.setQuantity(d.optInt("quantity_sold"));
+                                    lastSale.setUnitPrice(d.optDouble("unit_price"));
+                                    lastSale.setTotalPrice(d.optDouble("total_price"));
+                                    lastSale.setRemainingStock(d.optInt("remaining_stock"));
+                                    // Payment fields — authoritative from server
+                                    lastSale.setPaidAmount(d.optDouble("paid_amount", paid));
+                                    lastSale.setRemainingAmount(d.optDouble("remaining_amount", total - paid));
+                                    lastSale.setPaymentStatus(d.optString("payment_status", "paid"));
+                                    // Customer name set once (no duplication)
+                                    String custName = selectedCustomer != null ? selectedCustomer.getName() : "";
+                                    lastSale.setCustomerName(custName);
 
-                                    String remaining = data.optString("remaining_amount","0");
-                                    generatePdfInBackground();
+                                    generatePdfBackground(gst, custName);
                                 }
-
-                                if (layoutInvoiceActions != null)
-                                    layoutInvoiceActions.setVisibility(View.VISIBLE);
-
+                                if (layoutInvoiceActions != null) layoutInvoiceActions.setVisibility(View.VISIBLE);
                                 Snackbar.make(requireView(), "Sale recorded!", Snackbar.LENGTH_LONG)
                                         .setAction("Invoice", v -> openInvoice()).show();
                                 clearForm();
@@ -288,8 +334,7 @@ public class SellFragment extends Fragment {
                                 loadCustomers();
                             } else {
                                 Toast.makeText(requireContext(),
-                                        r.optString(ApiConfig.KEY_MESSAGE,"Sale failed"),
-                                        Toast.LENGTH_SHORT).show();
+                                        r.optString(ApiConfig.KEY_MESSAGE,"Sale failed"), Toast.LENGTH_SHORT).show();
                             }
                         } catch (Exception e) { e.printStackTrace(); }
                     }
@@ -301,18 +346,13 @@ public class SellFragment extends Fragment {
                 });
     }
 
-    // ── Invoice ───────────────────────────────────────────────────────────────
+    // ── PDF ───────────────────────────────────────────────────────────────────
 
-    private void generatePdfInBackground() {
+    private void generatePdfBackground(String gst, String custName) {
         if (lastSale == null) return;
-        String customer = etCustomerName.getText() != null
-                ? etCustomerName.getText().toString().trim() : "";
-        String gst = etGstNumber.getText() != null
-                ? etGstNumber.getText().toString().trim() : "";
         new Thread(() -> {
-            PdfGenerator gen = new PdfGenerator(requireContext(), lastSale)
-                    .setCustomerName(customer).setGstNumber(gst);
-            lastPdfFile = gen.generateInvoice();
+            lastPdfFile = new PdfGenerator(requireContext(), lastSale)
+                    .setCustomerName(custName).setGstNumber(gst).generateInvoice();
         }).start();
     }
 
@@ -321,10 +361,8 @@ public class SellFragment extends Fragment {
         if (lastPdfFile != null && lastPdfFile.exists()) {
             new PdfGenerator(requireContext(), lastSale).openPdf(lastPdfFile);
         } else {
-            String c = etCustomerName.getText() != null ? etCustomerName.getText().toString() : "";
-            String g = etGstNumber.getText()    != null ? etGstNumber.getText().toString()    : "";
             PdfGenerator gen = new PdfGenerator(requireContext(), lastSale)
-                    .setCustomerName(c).setGstNumber(g);
+                    .setCustomerName(lastSale.getCustomerName()).setGstNumber(txt(etGstNumber));
             lastPdfFile = gen.generateInvoice();
             if (lastPdfFile != null) gen.openPdf(lastPdfFile);
         }
@@ -335,21 +373,30 @@ public class SellFragment extends Fragment {
         new PdfGenerator(requireContext(), lastSale).sharePdf(lastPdfFile);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Utils ─────────────────────────────────────────────────────────────────
 
     private void clearForm() {
         spinnerProduct.setText("", false);
-        etQuantity.setText("");
-        etPaidAmount.setText("");
+        etQuantity.setText(""); etPaidAmount.setText("");
         tvTotalPrice.setText("₹0.00");
+        if (tvRemainingAmount != null) tvRemainingAmount.setText("Remaining: ₹0.00");
         cardProductInfo.setVisibility(View.GONE);
         cardCustomerCredit.setVisibility(View.GONE);
+        if (tilPaid != null) tilPaid.setError(null);
         selectedProduct = null;
     }
 
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         btnSell.setEnabled(!show);
+    }
+
+    private String txt(TextInputEditText et) {
+        return (et != null && et.getText() != null) ? et.getText().toString().trim() : "";
+    }
+
+    private String inr(double v) {
+        return NumberFormat.getCurrencyInstance(new Locale("en","IN")).format(v);
     }
 
     private Product parseProduct(JSONObject o) throws Exception {
@@ -362,5 +409,13 @@ public class SellFragment extends Fragment {
         p.setQuantity(o.getInt("quantity"));
         p.setPrice(o.getDouble("price"));
         return p;
+    }
+
+    private TextWatcher simpleWatcher(Runnable action) {
+        return new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s,int a,int b,int c){}
+            @Override public void afterTextChanged(Editable s){}
+            @Override public void onTextChanged(CharSequence s,int a,int b,int c){ action.run(); }
+        };
     }
 }
