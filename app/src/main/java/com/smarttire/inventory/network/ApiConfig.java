@@ -1,4 +1,4 @@
-// FILE: network/ApiConfig.java
+// FILE: network/ApiConfig.java  (UPDATED — new analytics endpoint added)
 package com.smarttire.inventory.network;
 
 public class ApiConfig {
@@ -18,12 +18,9 @@ public class ApiConfig {
     public static final String GET_SALES_HISTORY   = BASE_URL + "get_sales_history.php";
     public static final String ADD_PAYMENT         = BASE_URL + "add_payment.php";
     public static final String GET_DASHBOARD       = BASE_URL + "get_dashboard.php";
-    public static final String GET_DASHBOARD_DATA  = BASE_URL + "get_dashboard_data.php";
+    public static final String GET_DASHBOARD_DATA  = BASE_URL + "get_dashboard_data.php"; // NEW
     public static final String LOW_STOCK           = BASE_URL + "low_stock.php";
     public static final String GET_MONTHLY_SALES   = BASE_URL + "get_monthly_sales.php";
-    public static final String GET_PRODUCT_DETAIL  = BASE_URL + "get_product_detail.php";
-    public static final String GET_ALL_CUSTOMERS_REPORT = BASE_URL + "get_all_customers_report.php";
-    public static final String GET_DASHBOARD_ANALYTICS = BASE_URL + "get_dashboard_data.php";
 
     // ── Config ────────────────────────────────────────────────────────────────
     public static final int REQUEST_TIMEOUT      = 30_000;
