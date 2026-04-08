@@ -1,6 +1,4 @@
-// FILE: fragments/SellFragment.java
-// KEY FIX (Task 3/5): Sale object now carries paidAmount, remainingAmount,
-//   paymentStatus and customerName so PdfGenerator shows them correctly.
+// FILE: fragments/SellFragment.java  (UPDATED — selling price field + compact UI)
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
@@ -48,8 +46,8 @@ public class SellFragment extends Fragment {
     private CardView                cardProductInfo, cardCustomerCredit;
     private TextView                tvAvailableStock, tvUnitPrice, tvTotalPrice, tvRemainingAmount;
     private TextView                tvCustomerDue;
-    private TextInputLayout         tilQuantity, tilPaid;
-    private TextInputEditText       etQuantity, etPaidAmount, etGstNumber;
+    private TextInputLayout         tilQuantity, tilPaid, tilSellingPrice;
+    private TextInputEditText       etQuantity, etPaidAmount, etGstNumber, etSellingPrice;
     private MaterialButton          btnSell, btnAddCustomer, btnGenerateInvoice, btnShareInvoice;
     private LinearProgressIndicator progressBar;
     private LinearLayout            layoutInvoiceActions;
@@ -97,9 +95,11 @@ public class SellFragment extends Fragment {
         tvCustomerDue      = v.findViewById(R.id.tvCustomerDue);
         tilQuantity        = v.findViewById(R.id.tilQuantity);
         tilPaid            = v.findViewById(R.id.tilPaid);
+        tilSellingPrice    = v.findViewById(R.id.tilSellingPrice);
         etQuantity         = v.findViewById(R.id.etQuantity);
         etPaidAmount       = v.findViewById(R.id.etPaidAmount);
         etGstNumber        = v.findViewById(R.id.etGstNumber);
+        etSellingPrice     = v.findViewById(R.id.etSellingPrice);
         btnSell            = v.findViewById(R.id.btnSell);
         btnAddCustomer     = v.findViewById(R.id.btnAddCustomer);
         btnGenerateInvoice = v.findViewById(R.id.btnGenerateInvoice);
@@ -124,6 +124,8 @@ public class SellFragment extends Fragment {
             updateCustomerInfo();
         });
         etQuantity.addTextChangedListener(simpleWatcher(() -> { calculateTotal(); validatePaid(); }));
+        // Selling price change → recalculate total
+        etSellingPrice.addTextChangedListener(simpleWatcher(() -> { calculateTotal(); validatePaid(); }));
         etPaidAmount.addTextChangedListener(simpleWatcher(this::validatePaid));
 
         btnAddCustomer.setOnClickListener(v -> startActivity(
@@ -201,16 +203,31 @@ public class SellFragment extends Fragment {
         if (selectedProduct == null) { cardProductInfo.setVisibility(View.GONE); return; }
         cardProductInfo.setVisibility(View.VISIBLE);
         tvAvailableStock.setText(String.valueOf(selectedProduct.getQuantity()));
-        tvUnitPrice.setText(selectedProduct.getFormattedPrice());
+        tvUnitPrice.setText(inr(selectedProduct.getPrice()));
+        // Pre-fill selling price with base price
+        if (txt(etSellingPrice).isEmpty()) {
+            etSellingPrice.setText(String.valueOf((int) selectedProduct.getPrice()));
+        }
         calculateTotal();
     }
 
     private void updateCustomerInfo() {
         if (selectedCustomer == null || !selectedCustomer.hasDue()) {
-            cardCustomerCredit.setVisibility(View.GONE); return;
+            if (tvCustomerDue != null) tvCustomerDue.setVisibility(View.GONE); return;
         }
-        cardCustomerCredit.setVisibility(View.VISIBLE);
-        tvCustomerDue.setText("Existing due: " + selectedCustomer.getFormattedDue());
+        if (tvCustomerDue != null) {
+            tvCustomerDue.setVisibility(View.VISIBLE);
+            tvCustomerDue.setText("Due: " + selectedCustomer.getFormattedDue());
+        }
+    }
+
+    /** Uses selling price if set, otherwise falls back to base price */
+    private double getEffectivePrice() {
+        String sp = txt(etSellingPrice);
+        if (!sp.isEmpty()) {
+            try { return Double.parseDouble(sp); } catch (NumberFormatException ignored) {}
+        }
+        return selectedProduct != null ? selectedProduct.getPrice() : 0;
     }
 
     private void calculateTotal() {
@@ -218,7 +235,8 @@ public class SellFragment extends Fragment {
         String qs = txt(etQuantity);
         if (!qs.isEmpty()) {
             try {
-                tvTotalPrice.setText(inr(Integer.parseInt(qs) * selectedProduct.getPrice()));
+                double price = getEffectivePrice();
+                tvTotalPrice.setText(inr(Integer.parseInt(qs) * price));
                 return;
             } catch (NumberFormatException ignored) {}
         }
@@ -230,7 +248,7 @@ public class SellFragment extends Fragment {
         String qs = txt(etQuantity);
         if (qs.isEmpty()) return;
         double total;
-        try { total = Integer.parseInt(qs) * selectedProduct.getPrice(); }
+        try { total = Integer.parseInt(qs) * getEffectivePrice(); }
         catch (NumberFormatException e) { return; }
 
         String ps = txt(etPaidAmount);
@@ -257,6 +275,7 @@ public class SellFragment extends Fragment {
     private void performSell() {
         if (tilQuantity != null) tilQuantity.setError(null);
         if (tilPaid     != null) tilPaid.setError(null);
+        if (tilSellingPrice != null) tilSellingPrice.setError(null);
 
         if (selectedProduct == null) {
             Toast.makeText(requireContext(), "Select a product", Toast.LENGTH_SHORT).show(); return;
@@ -275,7 +294,14 @@ public class SellFragment extends Fragment {
             return;
         }
 
-        double total = qty * selectedProduct.getPrice();
+        // Selling price (admin-entered, falls back to base price)
+        double sellingPrice = getEffectivePrice();
+        if (sellingPrice <= 0) {
+            if(tilSellingPrice!=null) tilSellingPrice.setError("Enter selling price");
+            return;
+        }
+
+        double total = qty * sellingPrice;
         String ps    = txt(etPaidAmount);
         double paid;
 
@@ -296,34 +322,38 @@ public class SellFragment extends Fragment {
         String mode   = spinnerPayMode.getText().toString();
         String gst    = txt(etGstNumber);
 
+        // Temporarily override product price for this sale if selling price differs
+        double originalPrice = selectedProduct.getPrice();
+        if (Math.abs(sellingPrice - originalPrice) > 0.01) {
+            selectedProduct.setPrice(sellingPrice);
+        }
+
         showLoading(true);
         api.sellProduct(selectedProduct.getId(), custId, qty, paid, mode, gst,
                 new ApiService.ApiCallback() {
                     @Override public void onSuccess(JSONObject r) {
                         if (!isAdded()) return;
                         showLoading(false);
+                        // Restore original price
+                        selectedProduct.setPrice(originalPrice);
                         try {
                             if (r.getBoolean(ApiConfig.KEY_SUCCESS)) {
                                 JSONObject d = r.optJSONObject(ApiConfig.KEY_DATA);
                                 if (d != null) {
-                                    // ── Populate ALL payment fields on Sale (Task 3/5 core fix) ──
                                     lastSale = new Sale();
                                     lastSale.setSaleId(d.optInt("sale_id"));
                                     lastSale.setCompanyName(d.optString("company_name"));
                                     lastSale.setTireType(d.optString("tire_type"));
                                     lastSale.setTireSize(d.optString("tire_size"));
                                     lastSale.setQuantity(d.optInt("quantity_sold"));
-                                    lastSale.setUnitPrice(d.optDouble("unit_price"));
-                                    lastSale.setTotalPrice(d.optDouble("total_price"));
+                                    lastSale.setUnitPrice(sellingPrice);  // use selling price
+                                    lastSale.setTotalPrice(total);
                                     lastSale.setRemainingStock(d.optInt("remaining_stock"));
-                                    // Payment fields — authoritative from server
                                     lastSale.setPaidAmount(d.optDouble("paid_amount", paid));
                                     lastSale.setRemainingAmount(d.optDouble("remaining_amount", total - paid));
                                     lastSale.setPaymentStatus(d.optString("payment_status", "paid"));
-                                    // Customer name set once (no duplication)
                                     String custName = selectedCustomer != null ? selectedCustomer.getName() : "";
                                     lastSale.setCustomerName(custName);
-
                                     generatePdfBackground(gst, custName);
                                 }
                                 if (layoutInvoiceActions != null) layoutInvoiceActions.setVisibility(View.VISIBLE);
@@ -341,6 +371,7 @@ public class SellFragment extends Fragment {
                     @Override public void onError(String err) {
                         if (!isAdded()) return;
                         showLoading(false);
+                        selectedProduct.setPrice(originalPrice);
                         Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -377,11 +408,12 @@ public class SellFragment extends Fragment {
 
     private void clearForm() {
         spinnerProduct.setText("", false);
-        etQuantity.setText(""); etPaidAmount.setText("");
+        etQuantity.setText(""); etPaidAmount.setText(""); etSellingPrice.setText("");
         tvTotalPrice.setText("₹0.00");
         if (tvRemainingAmount != null) tvRemainingAmount.setText("Remaining: ₹0.00");
         cardProductInfo.setVisibility(View.GONE);
-        cardCustomerCredit.setVisibility(View.GONE);
+        if (cardCustomerCredit != null) cardCustomerCredit.setVisibility(View.GONE);
+        if (tvCustomerDue != null) tvCustomerDue.setVisibility(View.GONE);
         if (tilPaid != null) tilPaid.setError(null);
         selectedProduct = null;
     }
@@ -405,9 +437,10 @@ public class SellFragment extends Fragment {
         p.setCompanyId(o.optInt("company_id"));
         p.setCompanyName(o.getString("company_name"));
         p.setTireType(o.getString("tire_type"));
-        p.setTireSize(o.getString("tire_size"));
+        p.setTireSize(o.optString("tire_size",""));
         p.setQuantity(o.getInt("quantity"));
         p.setPrice(o.getDouble("price"));
+        p.setModelName(o.optString("model_name",""));
         return p;
     }
 

@@ -1,4 +1,4 @@
-// FILE: fragments/StockFragment.java (Java 8 compatible)
+// FILE: fragments/StockFragment.java  (REDESIGNED — model-focused, clean, CRUD actions)
 package com.smarttire.inventory.fragments;
 
 import android.content.Intent;
@@ -41,8 +41,8 @@ import java.util.List;
 
 public class StockFragment extends Fragment {
 
-    private TextInputEditText    etSearch, etModelFilter, etSizeFilter;
-    private AutoCompleteTextView spinnerCompanyFilter, spinnerSort;
+    private TextInputEditText    etSearch;
+    private AutoCompleteTextView spinnerCompanyFilter;
     private SwipeRefreshLayout   swipeRefresh;
     private RecyclerView         rvStock;
     private LinearLayout         layoutEmpty;
@@ -55,10 +55,7 @@ public class StockFragment extends Fragment {
     private final List<Product> filteredList = new ArrayList<>();
     private final List<Company> companyList  = new ArrayList<>();
 
-    private int    filterCompanyId = 0;
-    private String filterModel     = "";
-    private String filterSize      = "";
-    private String currentSort     = "company"; // company|low_stock|date|name
+    private int filterCompanyId = 0;
 
     public static StockFragment newInstance() { return new StockFragment(); }
 
@@ -75,7 +72,6 @@ public class StockFragment extends Fragment {
         initViews(view);
         setupRecyclerView();
         setupSearch();
-        setupFilters();
         loadCompanies();
         swipeRefresh.setOnRefreshListener(this::loadProducts);
         loadProducts();
@@ -83,42 +79,14 @@ public class StockFragment extends Fragment {
 
     private void initViews(View v) {
         etSearch            = v.findViewById(R.id.etSearch);
-        etModelFilter       = v.findViewById(R.id.etModelFilter);
-        etSizeFilter        = v.findViewById(R.id.etSizeFilter);
         spinnerCompanyFilter= v.findViewById(R.id.spinnerCompanyFilter);
-        spinnerSort         = v.findViewById(R.id.spinnerSort);
         swipeRefresh        = v.findViewById(R.id.swipeRefresh);
         rvStock             = v.findViewById(R.id.rvStock);
         layoutEmpty         = v.findViewById(R.id.layoutEmpty);
         progressBar         = v.findViewById(R.id.progressBar);
         btnExportPdf        = v.findViewById(R.id.btnExportStockPdf);
 
-        // Sort options
-        String[] sorts = {"Company (A-Z)", "Low Stock First", "Latest Added", "Model Name"};
-        spinnerSort.setAdapter(new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_dropdown_item_1line, sorts));
-        spinnerSort.setText(sorts[0], false);
-        spinnerSort.setOnItemClickListener((parent, view12, pos, id) -> {
-            switch (pos) {
-                case 1:
-                    currentSort = "low_stock";
-                    break;
-                case 2:
-                    currentSort = "date";
-                    break;
-                case 3:
-                    currentSort = "name";
-                    break;
-                default:
-                    currentSort = "company";
-                    break;
-            }
-            loadProducts();
-        });
-
-        if (btnExportPdf != null) {
-            btnExportPdf.setOnClickListener(v2 -> exportAllStockPdf());
-        }
+        if (btnExportPdf != null) btnExportPdf.setOnClickListener(v2 -> exportAllStockPdf());
     }
 
     private void setupRecyclerView() {
@@ -133,6 +101,11 @@ public class StockFragment extends Fragment {
             intent.putExtra(StockDetailActivity.EXTRA_PRODUCT_NAME, product.getDisplayName());
             startActivity(intent);
         });
+
+        // Stock changed → refresh dashboard data via callback
+        adapter.setOnStockChangedListener(() -> {
+            // Lightweight local UI refresh only; dashboard refreshes on resume
+        });
     }
 
     private void setupSearch() {
@@ -142,31 +115,6 @@ public class StockFragment extends Fragment {
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
                 applyLocalFilter();
             }
-        });
-    }
-
-    private void setupFilters() {
-        etModelFilter.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
-            @Override public void afterTextChanged(Editable s) {}
-            @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
-                filterModel = s.toString().trim();
-                loadProducts();
-            }
-        });
-
-        etSizeFilter.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
-            @Override public void afterTextChanged(Editable s) {}
-            @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
-                filterSize = s.toString().trim();
-                loadProducts();
-            }
-        });
-
-        spinnerCompanyFilter.setOnItemClickListener((parent, view, pos, id) -> {
-            filterCompanyId = pos == 0 ? 0 : companyList.get(pos - 1).getId();
-            loadProducts();
         });
     }
 
@@ -185,13 +133,19 @@ public class StockFragment extends Fragment {
                             companyList.add(new Company(o.getInt("id"), o.getString("name")));
                             names.add(o.getString("name"));
                         }
-                        spinnerCompanyFilter.setAdapter(new ArrayAdapter<>(requireContext(),
-                                android.R.layout.simple_dropdown_item_1line, names));
-                        spinnerCompanyFilter.setText(names.get(0), false);
+                        if (spinnerCompanyFilter != null) {
+                            spinnerCompanyFilter.setAdapter(new ArrayAdapter<>(requireContext(),
+                                    android.R.layout.simple_dropdown_item_1line, names));
+                            spinnerCompanyFilter.setText(names.get(0), false);
+                            spinnerCompanyFilter.setOnItemClickListener((parent, view, pos, id) -> {
+                                filterCompanyId = pos == 0 ? 0 : companyList.get(pos-1).getId();
+                                applyLocalFilter();
+                            });
+                        }
                     }
                 } catch (Exception e) { e.printStackTrace(); }
             }
-            @Override public void onError(String err) { /* non-critical */ }
+            @Override public void onError(String err) {}
         });
     }
 
@@ -199,29 +153,29 @@ public class StockFragment extends Fragment {
         if (!swipeRefresh.isRefreshing()) progressBar.setVisibility(View.VISIBLE);
         layoutEmpty.setVisibility(View.GONE);
 
-        api.getProductsSorted(filterModel, filterCompanyId, filterSize, currentSort,
-                new ApiService.ApiCallback() {
-                    @Override public void onSuccess(JSONObject r) {
-                        if (!isAdded()) return;
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefresh.setRefreshing(false);
-                        try {
-                            if (r.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                                JSONArray data = r.getJSONArray(ApiConfig.KEY_DATA);
-                                productList.clear();
-                                for (int i = 0; i < data.length(); i++)
-                                    productList.add(parseProduct(data.getJSONObject(i)));
-                                applyLocalFilter();
-                            }
-                        } catch (Exception e) { e.printStackTrace(); }
+        // Sort by model name for grouped appearance
+        api.getProductsSorted("", 0, "", "name", new ApiService.ApiCallback() {
+            @Override public void onSuccess(JSONObject r) {
+                if (!isAdded()) return;
+                progressBar.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
+                try {
+                    if (r.getBoolean(ApiConfig.KEY_SUCCESS)) {
+                        JSONArray data = r.getJSONArray(ApiConfig.KEY_DATA);
+                        productList.clear();
+                        for (int i = 0; i < data.length(); i++)
+                            productList.add(parseProduct(data.getJSONObject(i)));
+                        applyLocalFilter();
                     }
-                    @Override public void onError(String err) {
-                        if (!isAdded()) return;
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefresh.setRefreshing(false);
-                        Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+            @Override public void onError(String err) {
+                if (!isAdded()) return;
+                progressBar.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
+                Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void applyLocalFilter() {
@@ -229,13 +183,15 @@ public class StockFragment extends Fragment {
                 ? etSearch.getText().toString().toLowerCase().trim() : "";
         filteredList.clear();
         for (Product p : productList) {
-            if (query.isEmpty()
-                    || p.getCompanyName().toLowerCase().contains(query)
-                    || p.getTireType().toLowerCase().contains(query)
-                    || p.getTireSize().toLowerCase().contains(query)
-                    || p.getModelName().toLowerCase().contains(query)) {
-                filteredList.add(p);
-            }
+            // Company filter
+            if (filterCompanyId > 0 && p.getCompanyId() != filterCompanyId) continue;
+            // Search filter
+            if (!query.isEmpty()
+                    && !p.getCompanyName().toLowerCase().contains(query)
+                    && !p.getTireType().toLowerCase().contains(query)
+                    && !p.getTireSize().toLowerCase().contains(query)
+                    && !p.getModelName().toLowerCase().contains(query)) continue;
+            filteredList.add(p);
         }
         adapter.notifyDataSetChanged();
         layoutEmpty.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);

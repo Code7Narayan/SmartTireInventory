@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/layout/item_daily_stock.xml -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="6dp"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/padding_small"
+        android:gravity="center_vertical">
+
+        <!-- Type arrow -->
+        <TextView
+            android:id="@+id/tvDailyType"
+            android:layout_width="24dp"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:text="▲"/>
+
+        <!-- Product info -->
+        <TextView
+            android:id="@+id/tvDailyProduct"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_size_small"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="8dp"
+            android:text="Product Name"/>
+
+        <!-- Time -->
+        <TextView
+            android:id="@+id/tvDailyTime"
+            android:layout_width="36dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_hint"
+            android:textSize="@dimen/text_size_small"
+            android:gravity="center"
+            android:text="10:00"/>
+
+        <!-- Qty badge -->
+        <TextView
+            android:id="@+id/tvDailyQty"
+            android:layout_width="36dp"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_normal"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:text="0"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
