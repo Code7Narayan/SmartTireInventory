@@ -1,26 +1,25 @@
-// FILE: adapters/StockAdapter.java  (REDESIGNED — model-grouped, +qty, editable price, CRUD actions)
+// FILE: adapters/StockAdapter.java  (REFACTORED — Clean UI, Add to Cart, Edit Price/Qty)
 package com.smarttire.inventory.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputLayout;
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.models.Product;
 import com.smarttire.inventory.network.ApiService;
+import com.smarttire.inventory.utils.CartManager;
 
 import org.json.JSONObject;
 
@@ -60,47 +59,54 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         Product product = productList.get(position);
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
 
-        // Company
-        h.tvCompanyName.setText(product.getCompanyName());
+        // Header
+        h.tvModelName.setText(product.getModelName().isEmpty() ? product.getTireType() : product.getModelName());
+        h.tvCompanyName.setText(product.getCompanyName() + " | " + product.getTireSize());
 
-        // Model name — primary identifier
-        String model = product.getModelName();
-        if (model != null && !model.isEmpty()) {
-            h.tvModelName.setVisibility(View.VISIBLE);
-            h.tvModelName.setText(model);
-        } else {
-            h.tvModelName.setVisibility(View.VISIBLE);
-            h.tvModelName.setText(product.getTireType()); // fallback to tire type
+        // Price & Stock
+        h.tvPrice.setText(fmt.format(product.getPrice()));
+        h.tvQuantity.setText("Stock: " + product.getQuantity());
+        h.tvCurrentQty.setText(String.valueOf(product.getQuantity()));
+        
+        // Cost Price
+        if (h.tvCostPrice != null) {
+            h.tvCostPrice.setText("Cost: " + fmt.format(product.getCostPrice()));
         }
 
-        // Tire details
-        h.tvTireDetails.setText(product.getTireType() + " • " + product.getTireSize());
-
-        // Price
-        h.tvPrice.setText(fmt.format(product.getPrice()));
-
-        // Quantity with color coding
-        h.tvQuantity.setText(String.valueOf(product.getQuantity()));
-        h.tvQuantity.setTextColor(ContextCompat.getColor(ctx,
-                product.isLowStock() ? R.color.error : R.color.text_primary));
-
-        // Low stock warning
+        // Color coding for low stock
+        int stockColor = product.isLowStock() ? R.color.error : R.color.text_hint;
+        h.tvQuantity.setTextColor(ContextCompat.getColor(ctx, stockColor));
         h.ivLowStock.setVisibility(product.isLowStock() ? View.VISIBLE : View.GONE);
 
-        // ── + button: add 1 quantity ──────────────────────────────────────────
-        h.btnAddQty.setOnClickListener(v -> {
-            showAddQtyDialog(product, h);
+        // ── Plus Button Action ───────────────────────────────────────────────
+        h.btnPlus.setOnClickListener(v -> {
+            updateQuantityOnServer(product, 1, h);
         });
 
-        // ── Edit price ────────────────────────────────────────────────────────
-        h.ivEditPrice.setOnClickListener(v -> showPriceEditDialog(product, h, fmt));
-        h.tvPrice.setOnClickListener(v -> showPriceEditDialog(product, h, fmt));
+        // ── Minus Button Action ──────────────────────────────────────────────
+        h.btnMinus.setOnClickListener(v -> {
+            if (product.getQuantity() > 0) {
+                updateQuantityOnServer(product, -1, h);
+            } else {
+                Toast.makeText(ctx, "Stock cannot be negative", Toast.LENGTH_SHORT).show();
+            }
+        });
 
-        // ── Update button ─────────────────────────────────────────────────────
-        h.btnUpdate.setOnClickListener(v -> showUpdateDialog(product, h, fmt));
+        // ── Cart Action ───────────────────────────────────────────────────────
+        h.btnAddToCart.setOnClickListener(v -> {
+            if (product.getQuantity() <= 0) {
+                Toast.makeText(ctx, "Out of stock", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            CartManager.getInstance().addItem(product);
+            Toast.makeText(ctx, "Added to cart", Toast.LENGTH_SHORT).show();
+            if (changeListener != null) changeListener.onStockChanged();
+        });
 
-        // ── Delete button ─────────────────────────────────────────────────────
-        h.btnDelete.setOnClickListener(v -> showDeleteConfirmation(product, position));
+        // ── Edit Cost Price Action ───────────────────────────────────────────
+        h.btnEditCostPrice.setOnClickListener(v -> {
+            showEditDialog(product, "cost_price", "Edit Cost Price", h, fmt);
+        });
 
         // ── Card click → detail ───────────────────────────────────────────────
         h.itemView.setOnClickListener(v -> {
@@ -108,196 +114,69 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         });
     }
 
-    // ── + Qty Dialog ──────────────────────────────────────────────────────────
-
-    private void showAddQtyDialog(Product product, StockViewHolder h) {
+    private void showEditDialog(Product product, String type, String title, StockViewHolder h, NumberFormat fmt) {
         AlertDialog.Builder b = new AlertDialog.Builder(ctx);
-        b.setTitle("Add Stock: " + product.getCompanyName());
-        b.setMessage("Current quantity: " + product.getQuantity() + "\nHow many to add?");
+        b.setTitle(title);
+        
+        final EditText input = new EditText(ctx);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setText(String.valueOf(type.equals("price") ? product.getPrice() : product.getCostPrice()));
+        b.setView(input);
 
-        EditText et = new EditText(ctx);
-        et.setHint("Quantity to add");
-        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        et.setText("1");
-        b.setView(et);
-
-        b.setPositiveButton("Add", (dialog, which) -> {
-            String val = et.getText().toString().trim();
-            if (val.isEmpty()) return;
-            int qty;
-            try { qty = Integer.parseInt(val); } catch (NumberFormatException e) { return; }
-            if (qty <= 0) { Toast.makeText(ctx, "Enter a valid quantity", Toast.LENGTH_SHORT).show(); return; }
-
-            ApiService.getInstance(ctx).updateProduct(product.getId(), "quantity_add", -1, qty,
-                    new ApiService.ApiCallback() {
-                        @Override public void onSuccess(JSONObject response) {
-                            try {
-                                if (response.getBoolean("success")) {
-                                    product.setQuantity(product.getQuantity() + qty);
-                                    h.tvQuantity.setText(String.valueOf(product.getQuantity()));
-                                    h.tvQuantity.setTextColor(ContextCompat.getColor(ctx,
-                                            product.isLowStock() ? R.color.error : R.color.text_primary));
-                                    h.ivLowStock.setVisibility(product.isLowStock() ? View.VISIBLE : View.GONE);
-                                    Toast.makeText(ctx, "+" + qty + " added", Toast.LENGTH_SHORT).show();
+        b.setPositiveButton("Save", (dialog, which) -> {
+            try {
+                double newVal = Double.parseDouble(input.getText().toString());
+                ApiService.getInstance(ctx).updateProduct(product.getId(), type, newVal, 0,
+                        new ApiService.ApiCallback() {
+                            @Override public void onSuccess(JSONObject response) {
+                                if (response.optBoolean("success")) {
+                                    if (type.equals("price")) {
+                                        product.setPrice(newVal);
+                                        h.tvPrice.setText(fmt.format(product.getPrice()));
+                                    } else {
+                                        product.setCostPrice(newVal);
+                                        h.tvCostPrice.setText("Cost: " + fmt.format(product.getCostPrice()));
+                                    }
                                     if (changeListener != null) changeListener.onStockChanged();
                                 } else {
-                                    Toast.makeText(ctx, response.optString("message"), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ctx, response.optString("message", "Update failed"), Toast.LENGTH_SHORT).show();
                                 }
-                            } catch (Exception e) { e.printStackTrace(); }
-                        }
-                        @Override public void onError(String error) {
-                            Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                            }
+                            @Override public void onError(String error) { Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show(); }
+                        });
+            } catch (Exception e) {
+                Toast.makeText(ctx, "Invalid value", Toast.LENGTH_SHORT).show();
+            }
         });
         b.setNegativeButton("Cancel", null);
         b.show();
     }
 
-    // ── Price Edit Dialog ─────────────────────────────────────────────────────
-
-    private void showPriceEditDialog(Product product, StockViewHolder h, NumberFormat fmt) {
-        AlertDialog.Builder b = new AlertDialog.Builder(ctx);
-        b.setTitle("Update Price");
-        b.setMessage(product.getCompanyName() + " • " + product.getModelName());
-
-        EditText et = new EditText(ctx);
-        et.setHint("New price");
-        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        et.setText(String.valueOf(product.getPrice()));
-        b.setView(et);
-
-        b.setPositiveButton("Update", (dialog, which) -> {
-            String val = et.getText().toString().trim();
-            if (val.isEmpty()) return;
-            double price;
-            try { price = Double.parseDouble(val); } catch (NumberFormatException e) { return; }
-            if (price <= 0) { Toast.makeText(ctx, "Enter a valid price", Toast.LENGTH_SHORT).show(); return; }
-
-            ApiService.getInstance(ctx).updateProduct(product.getId(), "price", price, 0,
-                    new ApiService.ApiCallback() {
-                        @Override public void onSuccess(JSONObject response) {
-                            try {
-                                if (response.getBoolean("success")) {
-                                    product.setPrice(price);
-                                    h.tvPrice.setText(fmt.format(price));
-                                    Toast.makeText(ctx, "Price updated", Toast.LENGTH_SHORT).show();
-                                    if (changeListener != null) changeListener.onStockChanged();
-                                } else {
-                                    Toast.makeText(ctx, response.optString("message"), Toast.LENGTH_SHORT).show();
-                                }
-                            } catch (Exception e) { e.printStackTrace(); }
+    private void updateQuantityOnServer(Product product, int delta, StockViewHolder h) {
+        ApiService.getInstance(ctx).updateProduct(product.getId(), "quantity_add", -1, delta,
+                new ApiService.ApiCallback() {
+                    @Override public void onSuccess(JSONObject response) {
+                        if (response.optBoolean("success")) {
+                            product.setQuantity(product.getQuantity() + delta);
+                            h.tvQuantity.setText("Stock: " + product.getQuantity());
+                            h.tvCurrentQty.setText(String.valueOf(product.getQuantity()));
+                            
+                            int stockColor = product.isLowStock() ? R.color.error : R.color.text_hint;
+                            h.tvQuantity.setTextColor(ContextCompat.getColor(ctx, stockColor));
+                            h.ivLowStock.setVisibility(product.isLowStock() ? View.VISIBLE : View.GONE);
+                            
+                            if (changeListener != null) changeListener.onStockChanged();
+                        } else {
+                            Toast.makeText(ctx, response.optString("message", "Update failed"), Toast.LENGTH_SHORT).show();
                         }
-                        @Override public void onError(String error) {
-                            Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        });
-        b.setNegativeButton("Cancel", null);
-        b.show();
-    }
-
-    // ── Update Dialog (price + qty) ───────────────────────────────────────────
-
-    private void showUpdateDialog(Product product, StockViewHolder h, NumberFormat fmt) {
-        android.widget.LinearLayout layout = new android.widget.LinearLayout(ctx);
-        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
-        layout.setPadding(40, 20, 40, 10);
-
-        EditText etPrice = new EditText(ctx);
-        etPrice.setHint("New price (leave empty to keep)");
-        etPrice.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        layout.addView(etPrice);
-
-        EditText etQty = new EditText(ctx);
-        etQty.setHint("Add quantity (leave empty to skip)");
-        etQty.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        layout.addView(etQty);
-
-        new AlertDialog.Builder(ctx)
-                .setTitle("Update: " + product.getCompanyName() + " • " + (product.getModelName().isEmpty() ? product.getTireType() : product.getModelName()))
-                .setView(layout)
-                .setPositiveButton("Save", (dialog, which) -> {
-                    String priceStr = etPrice.getText().toString().trim();
-                    String qtyStr   = etQty.getText().toString().trim();
-                    double newPrice = priceStr.isEmpty() ? -1 : Double.parseDouble(priceStr);
-                    int    addQty   = qtyStr.isEmpty()   ? 0  : Integer.parseInt(qtyStr);
-
-                    ApiService.getInstance(ctx).updateProduct(product.getId(), "update", newPrice, addQty,
-                            new ApiService.ApiCallback() {
-                                @Override public void onSuccess(JSONObject response) {
-                                    try {
-                                        if (response.getBoolean("success")) {
-                                            if (newPrice > 0) { product.setPrice(newPrice); h.tvPrice.setText(fmt.format(newPrice)); }
-                                            if (addQty  > 0) {
-                                                product.setQuantity(product.getQuantity() + addQty);
-                                                h.tvQuantity.setText(String.valueOf(product.getQuantity()));
-                                            }
-                                            Toast.makeText(ctx, "Updated successfully", Toast.LENGTH_SHORT).show();
-                                            if (changeListener != null) changeListener.onStockChanged();
-                                        } else {
-                                            Toast.makeText(ctx, response.optString("message"), Toast.LENGTH_SHORT).show();
-                                        }
-                                    } catch (Exception e) { e.printStackTrace(); }
-                                }
-                                @Override public void onError(String error) { Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show(); }
-                            });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    // ── Delete Confirmation ───────────────────────────────────────────────────
-
-    private void showDeleteConfirmation(Product product, int position) {
-        new AlertDialog.Builder(ctx)
-                .setTitle("Delete Product")
-                .setMessage("Delete \"" + product.getDisplayName() + "\"?\n\nThis cannot be undone if the product has no sales.")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    ApiService.getInstance(ctx).updateProduct(product.getId(), "delete", -1, 0,
-                            new ApiService.ApiCallback() {
-                                @Override public void onSuccess(JSONObject response) {
-                                    try {
-                                        if (response.getBoolean("success")) {
-                                            int pos = productList.indexOf(product);
-                                            if (pos >= 0) {
-                                                productList.remove(pos);
-                                                productListFull.remove(product);
-                                                notifyItemRemoved(pos);
-                                            }
-                                            Toast.makeText(ctx, "Product deleted", Toast.LENGTH_SHORT).show();
-                                            if (changeListener != null) changeListener.onStockChanged();
-                                        } else {
-                                            Toast.makeText(ctx, response.optString("message"), Toast.LENGTH_LONG).show();
-                                        }
-                                    } catch (Exception e) { e.printStackTrace(); }
-                                }
-                                @Override public void onError(String error) { Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show(); }
-                            });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                    }
+                    @Override public void onError(String error) { 
+                        Toast.makeText(ctx, "Server error: " + error, Toast.LENGTH_SHORT).show(); 
+                    }
+                });
     }
 
     @Override public int getItemCount() { return productList.size(); }
-
-    public void filter(String query) {
-        productList.clear();
-        if (query.isEmpty()) {
-            productList.addAll(productListFull);
-        } else {
-            String q = query.toLowerCase().trim();
-            for (Product p : productListFull) {
-                if (p.getCompanyName().toLowerCase().contains(q)
-                        || p.getTireType().toLowerCase().contains(q)
-                        || p.getTireSize().toLowerCase().contains(q)
-                        || p.getModelName().toLowerCase().contains(q)) {
-                    productList.add(p);
-                }
-            }
-        }
-        notifyDataSetChanged();
-    }
 
     public void updateData(List<Product> newProducts) {
         productList.clear();
@@ -308,24 +187,23 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
     }
 
     public static class StockViewHolder extends RecyclerView.ViewHolder {
-        TextView     tvCompanyName, tvModelName, tvTireDetails, tvPrice, tvQuantity;
-        ImageView    ivLowStock, ivEditPrice, btnDelete, btnUpdate;
-        MaterialButton btnAddQty;
-        CardView     cardView;
+        TextView tvCompanyName, tvModelName, tvPrice, tvQuantity, tvCostPrice, tvCurrentQty;
+        View ivLowStock;
+        ImageButton btnAddToCart, btnPlus, btnMinus, btnEditCostPrice;
 
         public StockViewHolder(@NonNull View itemView) {
             super(itemView);
-            if (itemView instanceof CardView) cardView = (CardView) itemView;
-            tvCompanyName = itemView.findViewById(R.id.tvCompanyName);
-            tvModelName   = itemView.findViewById(R.id.tvModelName);
-            tvTireDetails = itemView.findViewById(R.id.tvTireDetails);
-            tvPrice       = itemView.findViewById(R.id.tvPrice);
-            tvQuantity    = itemView.findViewById(R.id.tvQuantity);
-            ivLowStock    = itemView.findViewById(R.id.ivLowStock);
-            ivEditPrice   = itemView.findViewById(R.id.ivEditPrice);
-            btnDelete     = itemView.findViewById(R.id.btnDelete);
-            btnUpdate     = itemView.findViewById(R.id.btnUpdate);
-            btnAddQty     = itemView.findViewById(R.id.btnAddQty);
+            tvCompanyName    = itemView.findViewById(R.id.tvCompanyName);
+            tvModelName      = itemView.findViewById(R.id.tvModelName);
+            tvPrice          = itemView.findViewById(R.id.tvPrice);
+            tvQuantity       = itemView.findViewById(R.id.tvQuantity);
+            tvCostPrice      = itemView.findViewById(R.id.tvCostPrice);
+            tvCurrentQty     = itemView.findViewById(R.id.tvCurrentQty);
+            ivLowStock       = itemView.findViewById(R.id.ivLowStock);
+            btnAddToCart     = itemView.findViewById(R.id.btnAddToCart);
+            btnPlus          = itemView.findViewById(R.id.btnPlus);
+            btnMinus         = itemView.findViewById(R.id.btnMinus);
+            btnEditCostPrice = itemView.findViewById(R.id.btnEditCostPrice);
         }
     }
 }

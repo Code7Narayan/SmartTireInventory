@@ -1,213 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_sell.xml  (REDESIGNED — compact, selling price field) -->
-<ScrollView
+<!-- FILE: res/layout/fragment_sell.xml (MODERN CART & CHECKOUT UI) -->
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="@color/background">
 
-    <LinearLayout
+    <!-- Header: Customer Selection -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/padding_medium">
-
-        <!-- Customer + Product in one card -->
-        <androidx.cardview.widget.CardView
+        android:layout_margin="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp">
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_small"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/card_background">
+            android:orientation="vertical"
+            android:padding="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/padding_medium">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <!-- Customer selector -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="Customer"
-                    android:layout_marginBottom="@dimen/margin_small"
+                    android:layout_weight="1"
+                    android:hint="Search Customer"
+                    app:startIconDrawable="@drawable/ic_company"
                     app:boxStrokeColor="@color/primary">
                     <AutoCompleteTextView
                         android:id="@+id/spinnerCustomer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:padding="@dimen/padding_medium"/>
+                        android:inputType="text"
+                        android:padding="12dp"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddNewCustomer"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="@dimen/margin_small">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAddCustomer"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="+ New Customer"
-                        android:textAllCaps="false"
-                        app:rippleColor="@color/primary"/>
-
-                    <!-- Customer credit warning -->
-                    <TextView
-                        android:id="@+id/tvCustomerDue"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textColor="@color/warning"
-                        android:textSize="@dimen/text_size_small"
-                        android:textStyle="italic"
-                        android:gravity="end"
-                        android:visibility="gone"
-                        android:text="Due: ₹0"/>
-                </LinearLayout>
-
-                <!-- Product selector -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Select Product"
-                    app:boxStrokeColor="@color/primary">
-                    <AutoCompleteTextView
-                        android:id="@+id/spinnerProduct"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:padding="@dimen/padding_medium"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
+                    android:text="NEW"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"/>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <!-- Product info strip (compact) -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardProductInfo"
+            <TextView
+                android:id="@+id/tvCustomerDue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Outstanding: ₹0"
+                android:textColor="@color/error"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Product Quick Add (Searchable) -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:layout_marginHorizontal="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp">
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_small"
-            android:visibility="gone"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/card_background">
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Add Product to Cart"
+                app:boxStrokeColor="@color/primary">
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerProduct"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddProduct"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ADD"
+                android:textColor="@color/primary"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Cart List -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Order Summary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCart"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingHorizontal="12dp"
+        android:clipToPadding="false"/>
+
+    <!-- Checkout Section -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="8dp"
+        app:cardCornerRadius="0dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="@dimen/padding_small"
-                android:gravity="center_vertical">
+                android:layout_marginBottom="12dp">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Stock"
-                    android:textColor="@color/text_hint"
-                    android:textSize="@dimen/text_size_small"/>
+                    android:text="Grand Total"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
                 <TextView
-                    android:id="@+id/tvAvailableStock"
+                    android:id="@+id/tvTotalPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/text_size_medium"
-                    android:text="0"/>
-                <View android:layout_width="1dp" android:layout_height="24dp"
-                    android:background="@color/divider" android:layout_marginHorizontal="12dp"/>
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Base Price"
-                    android:textColor="@color/text_hint"
-                    android:textSize="@dimen/text_size_small"/>
-                <TextView
-                    android:id="@+id/tvUnitPrice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/success"
-                    android:textStyle="bold"
-                    android:textSize="@dimen/text_size_medium"
-                    android:text="₹0"/>
+                    android:text="₹0.00"
+                    android:textColor="@color/primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <!-- Qty + Selling Price + Payment in one card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_small"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/card_background">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/padding_medium">
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
 
-                <!-- Qty + Selling Price side by side -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilQuantity"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        android:hint="Quantity"
-                        app:boxStrokeColor="@color/primary">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etQuantity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- NEW: Selling Price field -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilSellingPrice"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Selling Price (₹)"
-                        app:prefixText="₹"
-                        app:boxStrokeColor="@color/primary">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etSellingPrice"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="numberDecimal"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
-                <!-- Paid amount + mode -->
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilPaid"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_small"
-                    android:hint="Amount Paid (blank = full)"
-                    app:prefixText="₹"
-                    app:boxStrokeColor="@color/primary">
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:hint="Amount Paid"
+                    app:prefixText="₹">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPaidAmount"
                         android:layout_width="match_parent"
@@ -215,154 +179,32 @@
                         android:inputType="numberDecimal"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Remaining display -->
-                <TextView
-                    android:id="@+id/tvRemainingAmount"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Remaining: ₹0.00"
-                    android:textColor="@color/warning"
-                    android:textSize="@dimen/text_size_small"
-                    android:textStyle="italic"
-                    android:layout_marginTop="2dp"
-                    android:paddingStart="4dp"/>
-
-                <!-- Payment mode -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_small"
-                    android:hint="Payment Mode"
-                    app:boxStrokeColor="@color/primary">
+                    android:layout_weight="1"
+                    android:hint="Mode">
                     <AutoCompleteTextView
                         android:id="@+id/spinnerPaymentMode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:padding="@dimen/padding_medium"/>
+                        android:inputType="none"/>
                 </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- GST number (compact) -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_small"
-                    android:hint="GST Number (optional)"
-                    app:boxStrokeColor="@color/primary">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etGstNumber"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textCapCharacters"
-                        android:maxLines="1"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <!-- Total bar (compact) -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_small"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/primary">
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPlaceOrder"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="@dimen/padding_medium"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Total"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_medium"/>
-                <TextView
-                    android:id="@+id/tvTotalPrice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="₹0.00"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_xlarge"
-                    android:textStyle="bold"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Sell button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSell"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:text="Sell Now"
-            android:textAllCaps="false"
-            app:cornerRadius="@dimen/button_corner_radius"
-            app:backgroundTint="@color/primary"
-            app:icon="@drawable/ic_sell"
-            app:iconGravity="textStart"/>
-
-        <!-- Invoice actions (post-sale) -->
-        <LinearLayout
-            android:id="@+id/layoutInvoiceActions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="@dimen/margin_small"
-            android:visibility="gone">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnGenerateInvoice"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/button_height"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="Invoice"
+                android:layout_height="56dp"
+                android:text="Place Order"
                 android:textAllCaps="false"
-                app:cornerRadius="@dimen/button_corner_radius"
-                app:strokeColor="@color/primary"
-                app:icon="@drawable/ic_pdf"
+                android:textSize="16sp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_sell"
                 app:iconGravity="textStart"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnShareInvoice"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/button_height"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="Share"
-                android:textAllCaps="false"
-                app:cornerRadius="@dimen/button_corner_radius"
-                app:strokeColor="@color/primary"
-                app:icon="@drawable/ic_logout"
-                app:iconGravity="textStart"/>
         </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
-        <!-- Hidden credit card -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardCustomerCredit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginTop="@dimen/margin_small"
-            app:cardCornerRadius="4dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/primary_light"/>
-
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_small"
-            android:visibility="gone"
-            android:indeterminate="true"
-            app:indicatorColor="@color/primary"/>
-
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>

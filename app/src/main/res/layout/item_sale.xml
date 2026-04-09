@@ -1,178 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/item_sale.xml  (UPDATED — payment status badge + paid/remaining) -->
+<!-- FILE: res/layout/item_sale.xml (UPDATED) -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/margin_small"
-    android:layout_marginBottom="@dimen/margin_small"
-    android:foreground="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
-    app:cardCornerRadius="@dimen/card_corner_radius"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/card_background">
+    app:cardBackgroundColor="@android:color/white"
+    android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/padding_medium">
+        android:padding="16dp">
 
-        <!-- Row 1: Sale ID + Status badge + Date -->
+        <!-- Top Row: ID + Payment Status + Date -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:id="@+id/tvSaleId"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Sale #1"
+                android:text="Sale #00"
                 android:textColor="@color/primary"
-                android:textSize="@dimen/text_size_small"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textSize="14sp"/>
 
-            <!-- Payment status badge -->
             <TextView
                 android:id="@+id/tvSalePaymentStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:paddingHorizontal="6dp"
-                android:paddingVertical="2dp"
-                android:background="@drawable/bg_card"
                 android:text="PAID"
-                android:textColor="@color/success"
-                android:textSize="9sp"
-                android:textStyle="bold"/>
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp"/>
 
             <TextView
                 android:id="@+id/tvSaleDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="25 Mar 2026  06:22"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_size_small"/>
-
+                android:text="25 Mar 2026"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp"/>
         </LinearLayout>
 
-        <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/divider"
-            android:layout_marginVertical="6dp"/>
+            android:background="#EEEEEE"
+            android:layout_marginBottom="8dp"/>
 
-        <!-- Company name -->
+        <!-- Middle: Company & Tire Info -->
         <TextView
             android:id="@+id/tvSaleCompany"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="MRF"
-            android:textColor="@color/text_primary"
-            android:textSize="@dimen/text_size_medium"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
             android:textStyle="bold"/>
 
-        <!-- Tire details -->
         <TextView
             android:id="@+id/tvSaleTireDetails"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tubeless — 185/65 R15"
-            android:textColor="@color/text_secondary"
-            android:textSize="@dimen/text_size_normal"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp"
             android:layout_marginTop="2dp"/>
 
-        <!-- Row 3: Qty | Unit price | Total -->
+        <!-- Quantity, Unit Price and Total Price -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="@dimen/margin_small">
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvSaleQuantity"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Qty: 4"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_size_normal"/>
-
-            <TextView
-                android:id="@+id/tvSaleUnitPrice"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="₹5,500 / unit"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_size_normal"/>
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tvSaleQuantity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Qty: 1"
+                    android:textColor="@android:color/black"
+                    android:textSize="13sp"/>
+                <TextView
+                    android:id="@+id/tvSaleUnitPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹0 / unit"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="12sp"/>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvSaleTotalPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₹22,000"
+                android:text="₹0,000"
                 android:textColor="@color/success"
-                android:textSize="@dimen/text_size_medium"
+                android:textSize="18sp"
                 android:textStyle="bold"/>
-
         </LinearLayout>
 
-        <!-- Row 4: Paid | Remaining (shown when not fully paid) -->
+        <!-- Payment Breakdown (Paid/Remaining) - Shown only if not fully paid -->
         <LinearLayout
             android:id="@+id/layoutPaymentDetail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="12dp"
+            android:padding="8dp"
+            android:background="#F9F9F9"
             android:visibility="gone">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Paid:"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_size_small"/>
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PAID"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"/>
+                <TextView
+                    android:id="@+id/tvSalePaid"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹0"
+                    android:textColor="@color/success"
+                    android:textStyle="bold"
+                    android:textSize="13sp"/>
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvSalePaid"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="₹0"
-                android:textColor="@color/success"
-                android:textSize="@dimen/text_size_small"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Due:"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_size_small"/>
-
-            <TextView
-                android:id="@+id/tvSaleRemaining"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="₹0"
-                android:textColor="@color/warning"
-                android:textSize="@dimen/text_size_small"
-                android:textStyle="bold"/>
-
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DUE"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"/>
+                <TextView
+                    android:id="@+id/tvSaleRemaining"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹0"
+                    android:textColor="@color/error"
+                    android:textStyle="bold"
+                    android:textSize="13sp"/>
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
-
 </androidx.cardview.widget.CardView>
