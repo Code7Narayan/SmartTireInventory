@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_sell.xml (MODERN CART & CHECKOUT UI) -->
+<!-- FILE: res/layout/fragment_sell.xml (MODERN CART & CHECKOUT UI — Professional Tones) -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Header: Customer Selection -->
+    <!-- Header: Customer Selection (Blue Tone for Trust/Identity) -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,7 +34,9 @@
                     android:layout_weight="1"
                     android:hint="Search Customer"
                     app:startIconDrawable="@drawable/ic_company"
-                    app:boxStrokeColor="@color/primary">
+                    app:startIconTint="@color/info"
+                    app:boxStrokeColor="@color/info"
+                    app:hintTextColor="@color/info">
                     <AutoCompleteTextView
                         android:id="@+id/spinnerCustomer"
                         android:layout_width="match_parent"
@@ -49,8 +51,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="NEW"
-                    android:textColor="@color/primary"
-                    android:textStyle="bold"/>
+                    android:textColor="@color/info"
+                    android:textStyle="bold"
+                    app:icon="@drawable/ic_add"
+                    app:iconTint="@color/info" />
             </LinearLayout>
 
             <TextView
@@ -65,7 +69,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Product Quick Add (Searchable) -->
+    <!-- Product Quick Add (Teal/Info Tone for Inventory/Selection) -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -86,7 +90,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="Add Product to Cart"
-                app:boxStrokeColor="@color/primary">
+                app:startIconDrawable="@drawable/ic_stock"
+                app:startIconTint="@color/info"
+                app:boxStrokeColor="@color/info"
+                app:hintTextColor="@color/info">
                 <AutoCompleteTextView
                     android:id="@+id/spinnerProduct"
                     android:layout_width="match_parent"
@@ -100,8 +107,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ADD"
-                android:textColor="@color/primary"
-                android:textStyle="bold"/>
+                android:textColor="@color/success"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_add"
+                app:iconTint="@color/success" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -124,7 +133,7 @@
         android:paddingHorizontal="12dp"
         android:clipToPadding="false"/>
 
-    <!-- Checkout Section -->
+    <!-- Checkout Section (Success Green Tone for Revenue/Action) -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -134,27 +143,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:background="@color/surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Grand Total"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
                 <TextView
                     android:id="@+id/tvTotalPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="₹0.00"
-                    android:textColor="@color/primary"
-                    android:textSize="20sp"
+                    android:textColor="@color/success"
+                    android:textSize="22sp"
                     android:textStyle="bold"/>
             </LinearLayout>
 
@@ -171,27 +183,52 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:hint="Amount Paid"
-                    app:prefixText="₹">
+                    app:prefixText="₹"
+                    app:boxStrokeColor="@color/success"
+                    app:hintTextColor="@color/success">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPaidAmount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"/>
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/success"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="Mode">
-                    <AutoCompleteTextView
-                        android:id="@+id/spinnerPaymentMode"
+                    android:hint="Remaining"
+                    app:prefixText="₹"
+                    app:boxStrokeColor="@color/warning"
+                    app:hintTextColor="@color/warning">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etRemainingAmount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"/>
+                        android:inputType="numberDecimal"
+                        android:text="0"
+                        android:textColor="@color/warning"/>
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Payment Mode"
+                app:boxStrokeColor="@color/info"
+                app:hintTextColor="@color/info"
+                app:startIconDrawable="@drawable/ic_money"
+                app:startIconTint="@color/info">
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerPaymentMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPlaceOrder"
@@ -199,10 +236,14 @@
                 android:layout_height="56dp"
                 android:text="Place Order"
                 android:textAllCaps="false"
-                android:textSize="16sp"
+                android:textSize="18sp"
+                android:textStyle="bold"
                 app:cornerRadius="12dp"
+                app:backgroundTint="@color/success"
                 app:icon="@drawable/ic_sell"
-                app:iconGravity="textStart"/>
+                app:iconGravity="textStart"
+                app:iconSize="20dp"
+                app:elevation="4dp"/>
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

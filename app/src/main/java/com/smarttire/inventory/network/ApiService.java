@@ -1,24 +1,22 @@
-// FILE: network/ApiService.java  (UPDATED — updateProduct + getDailyAnalytics added)
+// FILE: network/ApiService.java (UPDATED — Full Migration to POST for Data Retrieval)
 package com.smarttire.inventory.network;
 
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
-
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ApiService {
-
     private static final String TAG = "ApiService";
     private static ApiService instance;
     private final RequestQueue queue;
@@ -66,36 +64,38 @@ public class ApiService {
 
     public void getProducts(ApiCallback cb) { get(ApiConfig.GET_PRODUCTS, cb); }
 
-    public void getProducts(String modelName, int companyId, String size, ApiCallback cb) {
-        get(ApiConfig.GET_PRODUCTS
-                + "?model_name=" + Uri.encode(modelName)
-                + "&company_id=" + companyId
-                + "&size="       + Uri.encode(size), cb);
-    }
-
-    public void getProductsSorted(String modelName, int companyId,
-                                  String size, String sort, ApiCallback cb) {
-        get(ApiConfig.GET_PRODUCTS
-                + "?model_name=" + Uri.encode(modelName)
-                + "&company_id=" + companyId
-                + "&size="       + Uri.encode(size)
-                + "&sort="       + Uri.encode(sort), cb);
+    public void getProductsSorted(String m, int cid, String s, String sort, ApiCallback cb) {
+        post(ApiConfig.GET_PRODUCTS, p -> {
+            p.put("model_name", m != null ? m : "");
+            p.put("company_id", String.valueOf(cid));
+            p.put("size", s != null ? s : "");
+            p.put("sort", sort != null ? sort : "");
+        }, cb);
     }
 
     public void getProductDetail(int productId, ApiCallback cb) {
-        get(ApiConfig.GET_PRODUCTS + "?detail_id=" + productId, cb);
+        post(ApiConfig.GET_PRODUCTS, p -> p.put("detail_id", String.valueOf(productId)), cb);
     }
 
-    /**
-     * NEW: Update product — action can be 'price', 'quantity_add', 'update', 'delete'
-     * Pass -1 for price/addQty when not applicable.
-     */
-    public void updateProduct(int productId, String action, double price, int addQty, ApiCallback cb) {
+    public void updateProduct(int id, String action, double price, int addQty, ApiCallback cb) {
         post(ApiConfig.UPDATE_PRODUCT, p -> {
-            p.put("product_id", String.valueOf(productId));
-            p.put("action",     action);
-            if (price > 0)   p.put("price",   String.valueOf(price));
-            if (addQty > 0)  p.put("add_qty", String.valueOf(addQty));
+            p.put("product_id", String.valueOf(id));
+            p.put("action", action);
+            if (price != -1) p.put("price", String.valueOf(price));
+            if (addQty != 0) p.put("add_qty", String.valueOf(addQty));
+        }, cb);
+    }
+
+    public void updateProductFull(int id, int cid, String type, String size, String model, double price, double cost, ApiCallback cb) {
+        post(ApiConfig.UPDATE_PRODUCT, p -> {
+            p.put("product_id", String.valueOf(id));
+            p.put("action", "update");
+            p.put("company_id", String.valueOf(cid));
+            p.put("tire_type", type);
+            p.put("tire_size", size);
+            p.put("model_name", model);
+            p.put("price", String.valueOf(price));
+            p.put("cost_price", String.valueOf(cost));
         }, cb);
     }
 
@@ -110,52 +110,62 @@ public class ApiService {
         }, cb);
     }
 
+    public void updateCustomer(int id, String name, String phone, String address, String gst, ApiCallback cb) {
+        post(ApiConfig.UPDATE_CUSTOMER, p -> {
+            p.put("customer_id", String.valueOf(id));
+            p.put("name", name);
+            p.put("phone", phone);
+            p.put("address", address);
+            p.put("gst_number", gst);
+        }, cb);
+    }
+
+    public void deleteCustomer(int id, ApiCallback cb) {
+        post(ApiConfig.DELETE_CUSTOMER, p -> p.put("customer_id", String.valueOf(id)), cb);
+    }
+
     public void getCustomers(String search, int page, ApiCallback cb) {
-        get(ApiConfig.GET_CUSTOMERS
-                + "?search=" + Uri.encode(search)
-                + "&page="   + page, cb);
+
+        String url = ApiConfig.GET_CUSTOMERS
+                + "?search=" + (search != null ? search : "")
+                + "&page=" + page;
+
+        get(url, cb); // ✅ USE GET
     }
 
     public void getAllCustomersForReport(ApiCallback cb) {
-        get(ApiConfig.GET_CUSTOMERS + "?report=1", cb);
+        post(ApiConfig.GET_CUSTOMERS, p -> p.put("report", "1"), cb);
     }
 
     public void getCustomerDetails(int customerId, ApiCallback cb) {
-        get(ApiConfig.GET_CUSTOMER_DETAIL + "?customer_id=" + customerId, cb);
+
+        String url = ApiConfig.GET_CUSTOMER_DETAIL + "?customer_id=" + customerId;
+
+        get(url, cb); // 🔥 MUST BE GET
     }
 
     // ── Sales ─────────────────────────────────────────────────────────────────
-    public void sellProduct(int productId, int customerId, int quantity,
-                            double paidAmount, String paymentMode,
-                            String gstNumber, ApiCallback cb) {
+    public void sellProduct(int pid, int cid, int q, double paid, String mode, String gst, ApiCallback cb) {
         post(ApiConfig.SELL_PRODUCT, p -> {
-            p.put("product_id",   String.valueOf(productId));
-            p.put("customer_id",  String.valueOf(customerId));
-            p.put("quantity",     String.valueOf(quantity));
-            p.put("paid_amount",  String.valueOf(paidAmount));
-            p.put("payment_mode", paymentMode);
-            p.put("gst_number",   gstNumber);
+            p.put("product_id",   String.valueOf(pid));
+            p.put("customer_id",  String.valueOf(cid));
+            p.put("quantity",     String.valueOf(q));
+            p.put("paid_amount",  String.valueOf(paid));
+            p.put("payment_mode", mode);
+            p.put("gst_number",   gst);
         }, cb);
     }
 
     public void getSalesHistory(String search, String startDate, String endDate,
-                                int page, ApiCallback cb) {
-        get(ApiConfig.GET_SALES_HISTORY
-                + "?search="     + Uri.encode(search)
-                + "&start_date=" + Uri.encode(startDate)
-                + "&end_date="   + Uri.encode(endDate)
-                + "&page="       + page, cb);
-    }
-
-    public void getSalesHistory(String search, String startDate, String endDate,
                                 int customerId, String status, int page, ApiCallback cb) {
-        get(ApiConfig.GET_SALES_HISTORY
-                + "?search="      + Uri.encode(search)
-                + "&start_date="  + Uri.encode(startDate)
-                + "&end_date="    + Uri.encode(endDate)
-                + "&customer_id=" + customerId
-                + "&status="      + Uri.encode(status)
-                + "&page="        + page, cb);
+        post(ApiConfig.GET_SALES_HISTORY, p -> {
+            p.put("page", String.valueOf(page));
+            p.put("search", search != null ? search : "");
+            p.put("start_date", startDate != null ? startDate : "");
+            p.put("end_date", endDate != null ? endDate : "");
+            p.put("customer_id", String.valueOf(customerId));
+            p.put("status", status != null ? status : "");
+        }, cb);
     }
 
     // ── Payments ──────────────────────────────────────────────────────────────
@@ -174,37 +184,43 @@ public class ApiService {
     public void getDashboardAnalytics(ApiCallback cb) { get(ApiConfig.GET_DASHBOARD_DATA, cb); }
 
     public void getMonthlySales(int months, ApiCallback cb) {
-        get(ApiConfig.GET_MONTHLY_SALES + "?months=" + months, cb);
+        post(ApiConfig.GET_MONTHLY_SALES, p -> p.put("months", String.valueOf(months)), cb);
     }
 
-    /**
-     * NEW: Daily analytics for a specific date (yyyy-MM-dd).
-     * Returns total added/sold/revenue for that date with transaction details.
-     */
     public void getDailyAnalytics(String date, ApiCallback cb) {
-        get(ApiConfig.GET_DAILY_ANALYTICS + "?date=" + Uri.encode(date), cb);
+        post(ApiConfig.GET_DAILY_ANALYTICS, p -> p.put("date", date != null ? date : ""), cb);
     }
-
-    // ── Cancel ────────────────────────────────────────────────────────────────
-    public void cancelAll() { queue.cancelAll(r -> true); }
 
     // ── HTTP helpers ──────────────────────────────────────────────────────────
 
     private void post(String url, ParamBuilder pb, ApiCallback cb) {
+
+        // 🔥 STEP 1: Build params OUTSIDE
+        Map<String, String> params = new HashMap<>();
+        pb.build(params);
+
+        // 🔥 DEBUG (VERY IMPORTANT)
+        Log.d("FINAL_PARAMS", params.toString());
+
         StringRequest req = new StringRequest(Request.Method.POST, url,
-                r -> parse(r, cb), e -> parseError(e, cb)) {
-            @Override protected Map<String, String> getParams() {
-                Map<String, String> p = new HashMap<>();
-                pb.build(p);
-                return p;
+                r -> parse(r, cb),
+                e -> parseError(e, cb)) {
+
+            @Override
+            protected Map<String, String> getParams() {
+                return params; // 🔥 RETURN PRE-BUILT MAP
             }
         };
+
+        req.setTag(TAG);
         enqueue(req);
     }
 
     private void get(String url, ApiCallback cb) {
-        enqueue(new StringRequest(Request.Method.GET, url,
-                r -> parse(r, cb), e -> parseError(e, cb)));
+        StringRequest req = new StringRequest(Request.Method.GET, url,
+                r -> parse(r, cb), e -> parseError(e, cb));
+        req.setTag(TAG);
+        enqueue(req);
     }
 
     private void parse(String raw, ApiCallback cb) {
@@ -212,25 +228,30 @@ public class ApiService {
         catch (JSONException e) { cb.onError("Invalid server response"); }
     }
 
-    private void parseError(com.android.volley.VolleyError e, ApiCallback cb) {
+    private void parseError(VolleyError e, ApiCallback cb) {
+        String msg = "Network error";
         if (e.networkResponse != null) {
+            int status = e.networkResponse.statusCode;
+            msg = "Server error: " + status;
             try {
-                String body = new String(e.networkResponse.data, "UTF-8");
-                Log.e(TAG, "HTTP " + e.networkResponse.statusCode + ": " + body);
-            } catch (Exception ex) { Log.e(TAG, "Error body parse failed", ex); }
-            cb.onError("Server error " + e.networkResponse.statusCode);
-        } else if (e.getMessage() != null) {
-            Log.e(TAG, "Volley: " + e.getMessage());
-            cb.onError(e.getMessage());
-        } else {
-            cb.onError("Connection error. Check internet.");
+                String responseBody = new String(e.networkResponse.data, StandardCharsets.UTF_8);
+                Log.e(TAG, "Error Body: " + responseBody);
+                if (responseBody.contains("message")) {
+                   JSONObject obj = new JSONObject(responseBody);
+                   msg = obj.optString("message", msg);
+                }
+            } catch (Exception ignored) {}
+        } else if (e instanceof com.android.volley.TimeoutError) {
+            msg = "Connection timeout";
+        } else if (e instanceof com.android.volley.NoConnectionError) {
+            msg = "No internet connection";
         }
+        Log.e(TAG, "Volley Error: " + msg, e);
+        cb.onError(msg);
     }
 
     private void enqueue(StringRequest req) {
-        req.setRetryPolicy(new DefaultRetryPolicy(ApiConfig.REQUEST_TIMEOUT,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        req.setRetryPolicy(new DefaultRetryPolicy(ApiConfig.REQUEST_TIMEOUT, 1, 1f));
         queue.add(req);
     }
 }

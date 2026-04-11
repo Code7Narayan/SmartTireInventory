@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/item_sale.xml (UPDATED) -->
+<!-- FILE: res/layout/item_sale.xml (UPDATED — added Customer Name) -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -60,15 +60,25 @@
             android:background="#EEEEEE"
             android:layout_marginBottom="8dp"/>
 
-        <!-- Middle: Company & Tire Info -->
+        <!-- Customer Info -->
+        <TextView
+            android:id="@+id/tvSaleCustomer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="John Doe"
+            android:textColor="@color/primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="2dp"/>
+
+        <!-- Middle: Brand & Tire Info -->
         <TextView
             android:id="@+id/tvSaleCompany"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="MRF"
             android:textColor="@android:color/black"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:id="@+id/tvSaleTireDetails"
@@ -76,7 +86,7 @@
             android:layout_height="wrap_content"
             android:text="Tubeless — 185/65 R15"
             android:textColor="@android:color/darker_gray"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:layout_marginTop="2dp"/>
 
         <!-- Quantity, Unit Price and Total Price -->

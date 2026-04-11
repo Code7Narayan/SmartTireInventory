@@ -1,10 +1,11 @@
-// FILE: activities/CustomerActivity.java  (ENHANCED — export all customers PDF)
+// FILE: activities/CustomerActivity.java
 package com.smarttire.inventory.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +38,7 @@ import java.util.List;
 
 public class CustomerActivity extends AppCompatActivity {
 
+    private static final String TAG = "CustomerActivity";
     private TextInputEditText   etSearch;
     private SwipeRefreshLayout  swipeRefresh;
     private RecyclerView        rvCustomers;
@@ -50,6 +52,9 @@ public class CustomerActivity extends AppCompatActivity {
     private int     currentPage = 1;
     private boolean isLoading   = false;
     private boolean hasMore     = true;
+
+    private static final int REQ_ADD_CUSTOMER = 100;
+    private static final int REQ_CUSTOMER_DETAIL = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,9 +79,11 @@ public class CustomerActivity extends AppCompatActivity {
         rvCustomers.setAdapter(adapter);
 
         adapter.setOnItemClickListener(customer -> {
-            Intent i = new Intent(this, CustomerDetailActivity.class);
-            i.putExtra("customer_id",   customer.getId());
-            i.putExtra("customer_name", customer.getName());
+            Intent i = new Intent(CustomerActivity.this, CustomerDetailActivity.class);
+
+            i.putExtra("customer_id", customer.getId());   // 🔥 MUST
+            i.putExtra("customer_name", customer.getName()); // optional (for toolbar)
+
             startActivity(i);
         });
 
@@ -101,7 +108,7 @@ public class CustomerActivity extends AppCompatActivity {
 
         FloatingActionButton fab = findViewById(R.id.fabAddCustomer);
         fab.setOnClickListener(v ->
-                startActivityForResult(new Intent(this, AddCustomerActivity.class), 100));
+                startActivityForResult(new Intent(this, AddCustomerActivity.class), REQ_ADD_CUSTOMER));
 
         loadCustomers(true);
     }
@@ -126,7 +133,9 @@ public class CustomerActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        if (req == 100 && res == RESULT_OK) loadCustomers(true);
+        if ((req == REQ_ADD_CUSTOMER || req == REQ_CUSTOMER_DETAIL) && res == RESULT_OK) {
+            loadCustomers(true);
+        }
     }
 
     private void loadCustomers(boolean reset) {
@@ -150,8 +159,13 @@ public class CustomerActivity extends AppCompatActivity {
                     if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
                         JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
                         List<Customer> page = new ArrayList<>();
-                        for (int i = 0; i < data.length(); i++)
-                            page.add(Customer.fromJSON(data.getJSONObject(i)));
+                        for (int i = 0; i < data.length(); i++) {
+                            try {
+                                page.add(Customer.fromJSON(data.getJSONObject(i)));
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing customer at index " + i, e);
+                            }
+                        }
 
                         if (reset) customerList.clear();
                         int start = customerList.size();
@@ -162,8 +176,15 @@ public class CustomerActivity extends AppCompatActivity {
                         hasMore = data.length() == 30;
                         currentPage++;
                         layoutEmpty.setVisibility(customerList.isEmpty() ? View.VISIBLE : View.GONE);
+                    } else {
+                        String msg = response.optString(ApiConfig.KEY_MESSAGE, "Failed to load customers");
+                        Toast.makeText(CustomerActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        layoutEmpty.setVisibility(customerList.isEmpty() ? View.VISIBLE : View.GONE);
                     }
-                } catch (Exception e) { e.printStackTrace(); }
+                } catch (Exception e) {
+                    Log.e(TAG, "Response parsing error", e);
+                    Toast.makeText(CustomerActivity.this, "Data error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override public void onError(String error) {

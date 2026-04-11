@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- FILE: res/layout/item_cart.xml (Professional Tones) -->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -46,8 +48,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Cost: ₹0"
-                        android:textColor="@color/error"
-                        android:textSize="14sp" />
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
 
                     <TextView
                         android:id="@+id/tvSellPrice"
@@ -56,13 +58,14 @@
                         android:text="Sell: ₹0"
                         android:textColor="@color/success"
                         android:textSize="14sp"
+                        android:textStyle="bold"
                         android:layout_marginStart="12dp" />
 
                     <ImageButton
                         android:id="@+id/btnEditPrice"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_marginStart="4dp"
+                        android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_edit"
                         app:tint="@color/info"
@@ -73,8 +76,10 @@
 
             <ImageButton
                 android:id="@+id/btnRemove"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="6dp"
+                android:scaleType="fitCenter"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_delete"
                 app:tint="@color/error" />
@@ -114,7 +119,7 @@
                     android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_minus"
-                    app:tint="@color/primary" />
+                    app:tint="@color/info" />
 
                 <TextView
                     android:id="@+id/tvQuantity"
@@ -132,7 +137,7 @@
                     android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_plus"
-                    app:tint="@color/primary" />
+                    app:tint="@color/info" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

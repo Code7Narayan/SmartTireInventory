@@ -1,4 +1,4 @@
-// FILE: network/ApiConfig.java  (UPDATED — daily analytics + update_product endpoints)
+// FILE: network/ApiConfig.java (UPDATED — Customer Edit/Delete Endpoints)
 package com.smarttire.inventory.network;
 
 public class ApiConfig {
@@ -11,8 +11,10 @@ public class ApiConfig {
     public static final String GET_COMPANIES       = BASE_URL + "get_companies.php";
     public static final String ADD_PRODUCT         = BASE_URL + "add_product.php";
     public static final String GET_PRODUCTS        = BASE_URL + "get_products.php";
-    public static final String UPDATE_PRODUCT      = BASE_URL + "update_product.php";   // NEW
+    public static final String UPDATE_PRODUCT      = BASE_URL + "update_product.php";
     public static final String ADD_CUSTOMER        = BASE_URL + "add_customer.php";
+    public static final String UPDATE_CUSTOMER     = BASE_URL + "update_customer.php"; // NEW
+    public static final String DELETE_CUSTOMER     = BASE_URL + "delete_customer.php"; // NEW
     public static final String GET_CUSTOMERS       = BASE_URL + "get_customers.php";
     public static final String GET_CUSTOMER_DETAIL = BASE_URL + "get_customer_details.php";
     public static final String SELL_PRODUCT        = BASE_URL + "sell_product.php";
@@ -20,7 +22,7 @@ public class ApiConfig {
     public static final String ADD_PAYMENT         = BASE_URL + "add_payment.php";
     public static final String GET_DASHBOARD       = BASE_URL + "get_dashboard.php";
     public static final String GET_DASHBOARD_DATA  = BASE_URL + "get_dashboard_data.php";
-    public static final String GET_DAILY_ANALYTICS = BASE_URL + "get_daily_analytics.php"; // NEW
+    public static final String GET_DAILY_ANALYTICS = BASE_URL + "get_daily_analytics.php";
     public static final String LOW_STOCK           = BASE_URL + "low_stock.php";
     public static final String GET_MONTHLY_SALES   = BASE_URL + "get_monthly_sales.php";
 

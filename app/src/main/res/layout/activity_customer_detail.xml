@@ -29,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="@dimen/padding_medium">
+            android:padding="16dp">
 
             <ProgressBar
                 android:id="@+id/progressBar"
@@ -42,37 +42,52 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/margin_medium"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/card_elevation"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/card_background">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="@dimen/padding_medium">
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/tvName"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/primary"
-                        android:textSize="@dimen/text_size_xlarge"
-                        android:textStyle="bold"
-                        android:text="Name"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:id="@+id/tvName"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:text="Name"/>
+                        <ImageButton
+                            android:id="@+id/btnEdit"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_edit"
+                            app:tint="@color/primary"/>
+                    </LinearLayout>
+
                     <TextView
                         android:id="@+id/tvPhone"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_secondary"
-                        android:textSize="@dimen/text_size_normal"
+                        android:textSize="16sp"
                         android:text="Phone"/>
                     <TextView
                         android:id="@+id/tvAddress"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_hint"
-                        android:textSize="@dimen/text_size_small"
+                        android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:text="Address"/>
                     <TextView
@@ -80,7 +95,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_hint"
-                        android:textSize="@dimen/text_size_small"
+                        android:textSize="12sp"
                         android:text="GST: —"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -91,107 +106,114 @@
                 android:layout_height="wrap_content"
                 android:columnCount="2"
                 android:useDefaultMargins="true"
-                android:layout_marginBottom="@dimen/margin_medium">
+                android:layout_marginBottom="16dp">
 
-                <!-- Total Sales -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp" android:layout_height="80dp"
                     android:layout_columnWeight="1"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardCornerRadius="12dp"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardElevation="2dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center">
                         <TextView android:id="@+id/tvTotalSales" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="0"
-                            android:textSize="@dimen/text_size_xlarge" android:textStyle="bold"
+                            android:textSize="20sp" android:textStyle="bold"
                             android:textColor="@color/primary"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Total Sales" android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_size_small"/>
+                            android:textSize="12sp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Amount -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp" android:layout_height="80dp"
                     android:layout_columnWeight="1"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardCornerRadius="12dp"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardElevation="2dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center">
                         <TextView android:id="@+id/tvTotalAmount" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="₹0"
-                            android:textSize="@dimen/text_size_large" android:textStyle="bold"
+                            android:textSize="18sp" android:textStyle="bold"
                             android:textColor="@color/text_primary"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Total Amount" android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_size_small"/>
+                            android:textSize="12sp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Paid -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp" android:layout_height="80dp"
                     android:layout_columnWeight="1"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardCornerRadius="12dp"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardElevation="2dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center">
                         <TextView android:id="@+id/tvTotalPaid" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="₹0"
-                            android:textSize="@dimen/text_size_large" android:textStyle="bold"
+                            android:textSize="18sp" android:textStyle="bold"
                             android:textColor="@color/success"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Total Paid" android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_size_small"/>
+                            android:textSize="12sp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Total Due -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp" android:layout_height="80dp"
                     android:layout_columnWeight="1"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardCornerRadius="12dp"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardElevation="2dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center">
                         <TextView android:id="@+id/tvTotalDue" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="₹0"
-                            android:textSize="@dimen/text_size_large" android:textStyle="bold"
-                            android:textColor="@color/success"/>
+                            android:textSize="18sp" android:textStyle="bold"
+                            android:textColor="@color/warning"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Total Due" android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_size_small"/>
+                            android:textSize="12sp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
             </GridLayout>
 
-            <!-- Pay Now Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPayNow"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/button_height"
-                android:layout_marginBottom="@dimen/margin_medium"
+                android:layout_height="48dp"
+                android:layout_marginBottom="16dp"
                 android:text="Record Payment"
                 android:textAllCaps="false"
                 android:visibility="gone"
-                app:cornerRadius="@dimen/button_corner_radius"
+                app:cornerRadius="8dp"
                 app:backgroundTint="@color/success"
                 app:icon="@drawable/ic_money"
                 app:iconGravity="textStart"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Delete Customer"
+                android:textColor="@color/error"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_delete"
+                app:iconTint="@color/error"
+                android:layout_marginBottom="16dp"/>
 
             <!-- Sales -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Purchase History"
                 android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_size_large"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="@dimen/margin_small"/>
+                android:layout_marginBottom="8dp"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvCustomerSales"
@@ -203,10 +225,10 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Payment History"
                 android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_size_large"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginTop="@dimen/margin_large"
-                android:layout_marginBottom="@dimen/margin_small"/>
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvPayments"

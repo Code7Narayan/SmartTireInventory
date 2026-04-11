@@ -32,6 +32,7 @@ import com.smarttire.inventory.models.Product;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
 import com.smarttire.inventory.utils.CartManager;
+import com.smarttire.inventory.utils.MessageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -45,17 +46,22 @@ public class SellFragment extends Fragment {
 
     private AutoCompleteTextView spinnerCustomer, spinnerProduct, spinnerPayMode;
     private TextView tvTotalPrice, tvCustomerDue;
-    private TextInputEditText etPaidAmount;
+    private TextInputEditText etPaidAmount, etRemainingAmount;
     private RecyclerView rvCart;
     private MaterialButton btnAddProduct, btnPlaceOrder, btnAddNewCustomer;
 
     private ApiService api;
-    private List<Product> productList = new ArrayList<>();
-    private List<Customer> customerList = new ArrayList<>();
+    private final List<Product> productList = new ArrayList<>();
+    private final List<Customer> customerList = new ArrayList<>();
     private Product selectedProduct;
     private Customer selectedCustomer;
     
     private CartAdapter cartAdapter;
+    private boolean isUpdatingAmounts = false;
+
+    // Track order summary for messaging
+    private List<Product> currentOrderItems;
+    private double currentOrderTotal, currentOrderPaid;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -69,6 +75,7 @@ public class SellFragment extends Fragment {
         initViews(view);
         setupCart();
         setupSearching();
+        setupAmountCalculation();
         
         btnAddProduct.setOnClickListener(v -> addToCart());
         btnPlaceOrder.setOnClickListener(v -> placeOrder());
@@ -85,6 +92,7 @@ public class SellFragment extends Fragment {
         tvTotalPrice = v.findViewById(R.id.tvTotalPrice);
         tvCustomerDue = v.findViewById(R.id.tvCustomerDue);
         etPaidAmount = v.findViewById(R.id.etPaidAmount);
+        etRemainingAmount = v.findViewById(R.id.etRemainingAmount);
         rvCart = v.findViewById(R.id.rvCart);
         btnAddProduct = v.findViewById(R.id.btnAddProduct);
         btnPlaceOrder = v.findViewById(R.id.btnPlaceOrder);
@@ -118,13 +126,13 @@ public class SellFragment extends Fragment {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void afterTextChanged(Editable s) {
-                if (s.length() >= 1) searchCustomers(s.toString());
+                if (s != null && s.length() >= 1) searchCustomers(s.toString());
             }
         });
 
         spinnerCustomer.setOnItemClickListener((parent, view, position, id) -> {
             selectedCustomer = (Customer) parent.getItemAtPosition(position);
-            if(selectedCustomer.hasDue()){
+            if(selectedCustomer != null && selectedCustomer.hasDue()){
                 tvCustomerDue.setVisibility(View.VISIBLE);
                 tvCustomerDue.setText("Outstanding: " + selectedCustomer.getFormattedDue());
             } else {
@@ -137,13 +145,57 @@ public class SellFragment extends Fragment {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void afterTextChanged(Editable s) {
-                if (s.length() >= 1) searchProducts(s.toString());
+                if (s != null && s.length() >= 1) searchProducts(s.toString());
             }
         });
 
         spinnerProduct.setOnItemClickListener((parent, view, position, id) -> {
             selectedProduct = (Product) parent.getItemAtPosition(position);
         });
+    }
+
+    private void setupAmountCalculation() {
+        etPaidAmount.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                if (isUpdatingAmounts) return;
+                isUpdatingAmounts = true;
+                calculateRemaining();
+                isUpdatingAmounts = false;
+            }
+        });
+
+        etRemainingAmount.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                if (isUpdatingAmounts) return;
+                isUpdatingAmounts = true;
+                calculatePaid();
+                isUpdatingAmounts = false;
+            }
+        });
+    }
+
+    private void calculateRemaining() {
+        double total = CartManager.getInstance().getTotal();
+        double paid = 0;
+        try {
+            Editable text = etPaidAmount.getText();
+            if (text != null) paid = Double.parseDouble(text.toString());
+        } catch (Exception ignored) {}
+        etRemainingAmount.setText(String.valueOf(Math.max(0, total - paid)));
+    }
+
+    private void calculatePaid() {
+        double total = CartManager.getInstance().getTotal();
+        double remaining = 0;
+        try {
+            Editable text = etRemainingAmount.getText();
+            if (text != null) remaining = Double.parseDouble(text.toString());
+        } catch (Exception ignored) {}
+        etPaidAmount.setText(String.valueOf(Math.max(0, total - remaining)));
     }
 
     private void searchCustomers(String query) {
@@ -154,18 +206,20 @@ public class SellFragment extends Fragment {
                     customerList.clear();
                     for(int i=0; i<data.length(); i++) customerList.add(Customer.fromJSON(data.getJSONObject(i)));
                     
-                    ArrayAdapter<Customer> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, customerList);
-                    spinnerCustomer.setAdapter(adapter);
-                    if (!query.isEmpty()) adapter.getFilter().filter(query);
-                    spinnerCustomer.showDropDown();
-                } catch(Exception e){}
+                    if (isAdded() && getContext() != null) {
+                        ArrayAdapter<Customer> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, customerList);
+                        spinnerCustomer.setAdapter(adapter);
+                        if (!query.isEmpty()) adapter.getFilter().filter(query);
+                        spinnerCustomer.showDropDown();
+                    }
+                } catch(Exception ignored){}
             }
             @Override public void onError(String e){}
         });
     }
 
     private void searchProducts(String query) {
-        api.getProducts(new ApiService.ApiCallback() { // Assuming this endpoint can be modified or handled for search
+        api.getProducts(new ApiService.ApiCallback() {
             @Override public void onSuccess(JSONObject r) {
                 try {
                     JSONArray data = r.getJSONArray(ApiConfig.KEY_DATA);
@@ -176,11 +230,13 @@ public class SellFragment extends Fragment {
                             productList.add(p);
                         }
                     }
-                    ArrayAdapter<Product> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, productList);
-                    spinnerProduct.setAdapter(adapter);
-                    if (!query.isEmpty()) adapter.getFilter().filter(query);
-                    spinnerProduct.showDropDown();
-                } catch(Exception e){}
+                    if (isAdded() && getContext() != null) {
+                        ArrayAdapter<Product> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, productList);
+                        spinnerProduct.setAdapter(adapter);
+                        if (!query.isEmpty()) adapter.getFilter().filter(query);
+                        spinnerProduct.showDropDown();
+                    }
+                } catch(Exception ignored){}
             }
             @Override public void onError(String e){}
         });
@@ -189,7 +245,6 @@ public class SellFragment extends Fragment {
     private void addToCart() {
         if(selectedProduct == null) return;
         
-        // Clone the product so editing price in cart doesn't change it for other cart items of the same product or global list
         Product p = new Product();
         p.setId(selectedProduct.getId());
         p.setCompanyName(selectedProduct.getCompanyName());
@@ -211,18 +266,69 @@ public class SellFragment extends Fragment {
         double total = CartManager.getInstance().getTotal();
         tvTotalPrice.setText(NumberFormat.getCurrencyInstance(new Locale("en","IN")).format(total));
         etPaidAmount.setText(String.valueOf((int)total));
+        etRemainingAmount.setText("0");
     }
 
     private void placeOrder() {
+        if(selectedCustomer == null) {
+            Toast.makeText(requireContext(), "Please select a customer", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if(CartManager.getInstance().getItems().isEmpty()){
             Toast.makeText(requireContext(), "Cart is empty", Toast.LENGTH_SHORT).show();
             return;
         }
-        // Logic for bulk order placement or loop through cart
-        Toast.makeText(requireContext(), "Order Placed Successfully", Toast.LENGTH_SHORT).show();
-        CartManager.getInstance().clear();
-        cartAdapter.updateItems(new ArrayList<>());
-        updateUI();
+
+        String payMode = spinnerPayMode.getText().toString();
+        currentOrderTotal = CartManager.getInstance().getTotal();
+        currentOrderPaid = 0;
+        try {
+            Editable text = etPaidAmount.getText();
+            if (text != null) currentOrderPaid = Double.parseDouble(text.toString());
+        } catch (Exception ignored) {}
+
+        currentOrderItems = new ArrayList<>(CartManager.getInstance().getItems());
+        processNextItem(currentOrderItems, 0, currentOrderPaid, payMode);
+    }
+
+    private void processNextItem(List<Product> items, int index, double remainingPaid, String payMode) {
+        if (!isAdded()) return;
+
+        if (index >= items.size()) {
+            Toast.makeText(requireContext(), "Order Placed Successfully", Toast.LENGTH_SHORT).show();
+            
+            // Send SMS notification
+            MessageHelper.sendOrderSms(requireContext(), selectedCustomer, items, currentOrderTotal, currentOrderPaid);
+
+            CartManager.getInstance().clear();
+            cartAdapter.updateItems(new ArrayList<>());
+            updateUI();
+            spinnerCustomer.setText("");
+            selectedCustomer = null;
+            return;
+        }
+
+        Product p = items.get(index);
+        double itemTotal = p.getPrice() * p.getCartQuantity();
+        double currentPaid = Math.min(remainingPaid, itemTotal);
+
+        api.sellProduct(p.getId(), selectedCustomer.getId(), p.getCartQuantity(), currentPaid, payMode, "", new ApiService.ApiCallback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                if (!isAdded()) return;
+                if (response.optBoolean("success")) {
+                    processNextItem(items, index + 1, Math.max(0, remainingPaid - currentPaid), payMode);
+                } else {
+                    Toast.makeText(requireContext(), "Error selling " + p.getDisplayName(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Server error: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private Product parseProduct(JSONObject o) throws Exception {
@@ -263,8 +369,8 @@ public class SellFragment extends Fragment {
         @Override public void onBindViewHolder(@NonNull VH h, int pos) {
             Product p = items.get(pos);
             h.tvName.setText(p.getDisplayName());
-            h.tvCost.setText("Cost: " + p.getFormattedCostPrice());
-            h.tvSell.setText("Sell: " + p.getFormattedPrice());
+            h.tvCost.setText(String.format("Cost: %s", p.getFormattedCostPrice()));
+            h.tvSell.setText(String.format("Sell: %s", p.getFormattedPrice()));
             h.tvQty.setText(String.valueOf(p.getCartQuantity()));
 
             h.btnPlus.setOnClickListener(v -> {
@@ -299,7 +405,7 @@ public class SellFragment extends Fragment {
                     try {
                         double newPrice = Double.parseDouble(input.getText().toString());
                         p.setPrice(newPrice);
-                        h.tvSell.setText("Sell: " + p.getFormattedPrice());
+                        h.tvSell.setText(String.format("Sell: %s", p.getFormattedPrice()));
                         listener.onQuantityChanged();
                     } catch (Exception e) {
                         Toast.makeText(v.getContext(), "Invalid price", Toast.LENGTH_SHORT).show();

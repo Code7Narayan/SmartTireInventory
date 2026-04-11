@@ -1,4 +1,4 @@
-// FILE: adapters/SalesAdapter.java  (UPDATED — payment status badge, paid/remaining row)
+// FILE: adapters/SalesAdapter.java (UPDATED — added customer name binding and display list getter)
 package com.smarttire.inventory.adapters;
 
 import android.content.Context;
@@ -20,8 +20,7 @@ import java.util.List;
 
 /**
  * RecyclerView adapter for the Sales History screen.
- * UPDATED: Shows payment status badge (PAID / PARTIAL / UNPAID) and
- *          a paid/remaining breakdown row when the sale is not fully paid.
+ * UPDATED: Shows customer name, payment status badge, and paid/remaining breakdown.
  */
 public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.SaleViewHolder> {
 
@@ -53,6 +52,7 @@ public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.SaleViewHold
         SaleRecord sale = displayList.get(pos);
 
         h.tvSaleId.setText("Sale #" + sale.getId());
+        h.tvCustomer.setText(sale.getCustomerNameSnap().isEmpty() ? "Walk-in Customer" : sale.getCustomerNameSnap());
         h.tvCompany.setText(sale.getCompanyName());
         h.tvTireDetails.setText(sale.getTireType() + " — " + sale.getTireSize());
         h.tvQuantity.setText("Qty: " + sale.getQuantity());
@@ -89,24 +89,14 @@ public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.SaleViewHold
 
     @Override public int getItemCount() { return displayList.size(); }
 
-    // ── Data management ───────────────────────────────────────────────────────
+    public List<SaleRecord> getDisplayList() { return displayList; }
 
-    /** Replace all data and reset filter. */
     public void updateData(List<SaleRecord> newData) {
         masterList.clear();  masterList.addAll(newData);
         displayList.clear(); displayList.addAll(newData);
         notifyDataSetChanged();
     }
 
-    /** Append paginated results. */
-    public void appendData(List<SaleRecord> more) {
-        int start = displayList.size();
-        masterList.addAll(more);
-        displayList.addAll(more);
-        notifyItemRangeInserted(start, more.size());
-    }
-
-    /** Local filter by search query. Empty string resets. */
     public void filter(String query) {
         displayList.clear();
         if (query == null || query.isEmpty()) {
@@ -125,19 +115,16 @@ public class SalesAdapter extends RecyclerView.Adapter<SalesAdapter.SaleViewHold
         notifyDataSetChanged();
     }
 
-    public int getDisplayCount() { return displayList.size(); }
-
-    // ── ViewHolder ────────────────────────────────────────────────────────────
-
     public static class SaleViewHolder extends RecyclerView.ViewHolder {
-        final TextView      tvSaleId, tvCompany, tvTireDetails,
+        final TextView tvSaleId, tvCustomer, tvCompany, tvTireDetails,
                 tvQuantity, tvUnitPrice, tvTotalPrice, tvDate;
-        final TextView      tvPaymentStatus, tvPaid, tvRemaining;
-        final LinearLayout  layoutPaymentDetail;
+        final TextView tvPaymentStatus, tvPaid, tvRemaining;
+        final LinearLayout layoutPaymentDetail;
 
         public SaleViewHolder(@NonNull View itemView) {
             super(itemView);
             tvSaleId            = itemView.findViewById(R.id.tvSaleId);
+            tvCustomer          = itemView.findViewById(R.id.tvSaleCustomer);
             tvCompany           = itemView.findViewById(R.id.tvSaleCompany);
             tvTireDetails       = itemView.findViewById(R.id.tvSaleTireDetails);
             tvQuantity          = itemView.findViewById(R.id.tvSaleQuantity);

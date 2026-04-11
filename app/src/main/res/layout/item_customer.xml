@@ -69,29 +69,45 @@
 
         </LinearLayout>
 
-        <!-- Due badge -->
+        <!-- Due and Action -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Due"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_size_small"/>
+                android:orientation="vertical"
+                android:gravity="end"
+                android:layout_marginEnd="12dp">
 
-            <TextView
-                android:id="@+id/tvCustomerDue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/success"
-                android:textSize="@dimen/text_size_normal"
-                android:textStyle="bold"
-                android:text="₹0"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Due"
+                    android:textColor="@color/text_hint"
+                    android:textSize="@dimen/text_size_small"/>
 
+                <TextView
+                    android:id="@+id/tvCustomerDue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/success"
+                    android:textSize="@dimen/text_size_normal"
+                    android:textStyle="bold"
+                    android:text="₹0"/>
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnSendMessage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_message"
+                android:tint="@color/primary"
+                android:padding="8dp"/>
         </LinearLayout>
 
     </LinearLayout>

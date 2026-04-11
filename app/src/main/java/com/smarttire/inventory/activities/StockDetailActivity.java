@@ -1,9 +1,14 @@
-// FILE: activities/StockDetailActivity.java
+// FILE: activities/StockDetailActivity.java (UPDATED — Edit Stock + Delete History)
 package com.smarttire.inventory.activities;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -16,7 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.smarttire.inventory.R;
+import com.smarttire.inventory.models.Company;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
 import com.smarttire.inventory.utils.StockPdfGenerator;
@@ -38,7 +45,8 @@ public class StockDetailActivity extends AppCompatActivity {
 
     private TextView        tvCompany, tvModel, tvTireType, tvTireSize, tvPrice;
     private TextView        tvTotalAdded, tvTotalSold, tvCurrentStock, tvAddedDate;
-    private MaterialButton  btnSell, btnExportPdf;
+    private MaterialButton  btnSell, btnExportPdf, btnDelete;
+    private ImageButton     btnEdit;
     private RecyclerView    rvTransactions;
     private ProgressBar     progressBar;
     private LinearLayout    layoutContent;
@@ -46,6 +54,7 @@ public class StockDetailActivity extends AppCompatActivity {
     private ApiService api;
     private int        productId;
     private JSONObject productData;
+    private final List<Company> companyList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +81,8 @@ public class StockDetailActivity extends AppCompatActivity {
         tvAddedDate    = findViewById(R.id.tvDetailAddedDate);
         btnSell        = findViewById(R.id.btnDetailSell);
         btnExportPdf   = findViewById(R.id.btnDetailExportPdf);
+        btnDelete      = findViewById(R.id.btnDetailDelete);
+        btnEdit        = findViewById(R.id.btnDetailEdit);
         rvTransactions = findViewById(R.id.rvDetailTransactions);
         progressBar    = findViewById(R.id.progressBar);
         layoutContent  = findViewById(R.id.layoutContent);
@@ -79,7 +90,11 @@ public class StockDetailActivity extends AppCompatActivity {
         rvTransactions.setLayoutManager(new LinearLayoutManager(this));
         rvTransactions.setNestedScrollingEnabled(false);
 
+        if (btnDelete != null) btnDelete.setOnClickListener(v -> showDeleteConfirmation());
+        if (btnEdit != null)   btnEdit.setOnClickListener(v -> showEditDialog());
+
         loadDetail();
+        loadCompanies();
     }
 
     private void loadDetail() {
@@ -98,13 +113,10 @@ public class StockDetailActivity extends AppCompatActivity {
                     layoutContent.setVisibility(View.VISIBLE);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(StockDetailActivity.this,
-                            "Error loading detail", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(StockDetailActivity.this, "Error loading detail", Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onError(String error) {
+            @Override public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(StockDetailActivity.this, error, Toast.LENGTH_SHORT).show();
             }
@@ -129,41 +141,23 @@ public class StockDetailActivity extends AppCompatActivity {
         tvTotalSold.setText(String.valueOf(totalSold));
         tvCurrentStock.setText(String.valueOf(currentStock));
 
-        // Color code current stock
-        if (currentStock < 5) {
-            tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.warning));
-        } else {
-            tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.success));
-        }
+        if (currentStock < 5) tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.warning));
+        else tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.success));
 
-        // Format added date
-        String createdAt = product.optString("created_at", "");
-        tvAddedDate.setText(formatDate(createdAt));
+        tvAddedDate.setText(formatDate(product.optString("created_at", "")));
 
-        // Transaction history adapter
         List<String[]> txRows = new ArrayList<>();
         for (int i = 0; i < txList.length(); i++) {
             JSONObject tx = txList.getJSONObject(i);
-            String type   = tx.optString("type", "");
-            String qty    = String.valueOf(tx.optInt("quantity", 0));
-            String note   = tx.optString("note", "");
-            String date   = formatDate(tx.optString("created_at", ""));
-            txRows.add(new String[]{type, qty, note, date});
+            txRows.add(new String[]{tx.optString("type", ""), String.valueOf(tx.optInt("quantity", 0)), tx.optString("note", ""), formatDate(tx.optString("created_at", ""))});
         }
-        StockTransactionAdapter adapter = new StockTransactionAdapter(this, txRows);
-        rvTransactions.setAdapter(adapter);
+        rvTransactions.setAdapter(new StockTransactionAdapter(this, txRows));
 
-        // Buttons
         btnSell.setOnClickListener(v -> {
-            // Open MainActivity → SellFragment with product pre-selected
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtra("open_sell", true);
-            intent.putExtra("preselect_product_id",   productId);
-            intent.putExtra("preselect_product_name",
-                    product.optString("company_name") + " | " +
-                            product.optString("model_name") + " " +
-                            product.optString("tire_type") + " (" +
-                            product.optString("tire_size") + ")");
+            intent.putExtra("preselect_product_id", productId);
+            intent.putExtra("preselect_product_name", product.optString("company_name") + " | " + product.optString("model_name") + " " + product.optString("tire_type") + " (" + product.optString("tire_size") + ")");
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         });
@@ -171,80 +165,147 @@ public class StockDetailActivity extends AppCompatActivity {
         btnExportPdf.setOnClickListener(v -> exportPdf(product, totalAdded, totalSold, currentStock, txRows));
     }
 
-    private void exportPdf(JSONObject product, int totalAdded, int totalSold,
-                           int currentStock, List<String[]> txRows) {
+    private void showEditDialog() {
+        if (productData == null) return;
+        try {
+            JSONObject p = productData.getJSONObject("product");
+            AlertDialog.Builder b = new AlertDialog.Builder(this);
+            View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_stock, null);
+            b.setView(v);
+
+            AutoCompleteTextView spinCompany = v.findViewById(R.id.editStockCompany);
+            AutoCompleteTextView spinType    = v.findViewById(R.id.editStockType);
+            TextInputEditText etModel        = v.findViewById(R.id.editStockModel);
+            TextInputEditText etSize         = v.findViewById(R.id.editStockSize);
+            TextInputEditText etPrice        = v.findViewById(R.id.editStockPrice);
+            TextInputEditText etCostPrice   = v.findViewById(R.id.editStockCostPrice);
+
+            // Setup spinners
+            ArrayAdapter<Company> cAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, companyList);
+            spinCompany.setAdapter(cAdapter);
+            String[] types = getResources().getStringArray(R.array.tire_types);
+            spinType.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, types));
+
+            // Set current values
+            spinCompany.setText(p.optString("company_name"), false);
+            spinType.setText(p.optString("tire_type"), false);
+            etModel.setText(p.optString("model_name"));
+            etSize.setText(p.optString("tire_size"));
+            etPrice.setText(String.valueOf(p.optDouble("price")));
+            etCostPrice.setText(String.valueOf(p.optDouble("cost_price")));
+
+            b.setTitle("Edit Product Details");
+            b.setPositiveButton("Update", (dialog, which) -> {
+                performUpdate(spinCompany.getText().toString(), spinType.getText().toString(), etModel.getText().toString(), etSize.getText().toString(), etPrice.getText().toString(), etCostPrice.getText().toString());
+            });
+            b.setNegativeButton("Cancel", null);
+            b.show();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void performUpdate(String company, String type, String model, String size, String price, String cost) {
+        // Find company ID from name
+        int cid = 0;
+        for (Company c : companyList) if (c.getName().equals(company)) { cid = c.getId(); break; }
+        if (cid == 0) { Toast.makeText(this, "Select a valid company", Toast.LENGTH_SHORT).show(); return; }
+
+        progressBar.setVisibility(View.VISIBLE);
+        // Note: We need to extend ApiService to support full product update or use current ones.
+        // For now, let's assume we update price and use a new method for full update if available.
+        // I will update ApiService to handle this properly.
+        api.updateProductFull(productId, cid, type, size, model, Double.parseDouble(price), Double.parseDouble(cost), new ApiService.ApiCallback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.optBoolean("success")) {
+                    Toast.makeText(StockDetailActivity.this, "Product updated", Toast.LENGTH_SHORT).show();
+                    loadDetail();
+                } else Toast.makeText(StockDetailActivity.this, response.optString("message"), Toast.LENGTH_LONG).show();
+            }
+            @Override public void onError(String error) { progressBar.setVisibility(View.GONE); }
+        });
+    }
+
+    private void loadCompanies() {
+        api.getCompanies(new ApiService.ApiCallback() {
+            @Override public void onSuccess(JSONObject response) {
+                try {
+                    if (response.optBoolean("success")) {
+                        JSONArray data = response.getJSONArray("data");
+                        companyList.clear();
+                        for (int i = 0; i < data.length(); i++) {
+                            JSONObject obj = data.getJSONObject(i);
+                            companyList.add(new Company(obj.getInt("id"), obj.getString("name")));
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+            @Override public void onError(String error) {}
+        });
+    }
+
+    private void showDeleteConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Product")
+                .setMessage("Are you sure? This will PERMANENTLY delete this product along with all its sales history and payments.")
+                .setPositiveButton("Delete Everything", (dialog, which) -> performDelete())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void performDelete() {
+        progressBar.setVisibility(View.VISIBLE);
+        api.updateProduct(productId, "delete", -1, 0, new ApiService.ApiCallback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.optBoolean("success")) {
+                    Toast.makeText(StockDetailActivity.this, "Product deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else Toast.makeText(StockDetailActivity.this, response.optString("message"), Toast.LENGTH_LONG).show();
+            }
+            @Override public void onError(String error) { progressBar.setVisibility(View.GONE); }
+        });
+    }
+
+    private void exportPdf(JSONObject product, int totalAdded, int totalSold, int currentStock, List<String[]> txRows) {
         try {
             StockPdfGenerator gen = new StockPdfGenerator(this);
-            java.io.File pdf = gen.generateStockDetailPdf(
-                    product.optString("company_name"),
-                    product.optString("model_name"),
-                    product.optString("tire_type"),
-                    product.optString("tire_size"),
-                    product.optDouble("price", 0),
-                    totalAdded, totalSold, currentStock,
-                    txRows
-            );
+            java.io.File pdf = gen.generateStockDetailPdf(product.optString("company_name"), product.optString("model_name"), product.optString("tire_type"), product.optString("tire_size"), product.optDouble("price", 0), totalAdded, totalSold, currentStock, txRows);
             if (pdf != null) gen.openPdf(pdf);
-            else Toast.makeText(this, "PDF generation failed", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "PDF error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        } catch (Exception e) { Toast.makeText(this, "PDF error: " + e.getMessage(), Toast.LENGTH_SHORT).show(); }
     }
 
     private String formatDate(String raw) {
         if (raw == null || raw.isEmpty()) return "—";
         try {
-            SimpleDateFormat in  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             SimpleDateFormat out = new SimpleDateFormat("dd MMM yyyy  HH:mm", Locale.getDefault());
             Date d = in.parse(raw);
             return d != null ? out.format(d) : raw;
-        } catch (Exception e) {
-            return raw;
-        }
+        } catch (Exception e) { return raw; }
     }
 
-    // ── Inner adapter for transaction list ────────────────────────────────────
-    static class StockTransactionAdapter
-            extends RecyclerView.Adapter<StockTransactionAdapter.VH> {
-
+    static class StockTransactionAdapter extends RecyclerView.Adapter<StockTransactionAdapter.VH> {
         private final android.content.Context ctx;
-        private final List<String[]> list; // [type, qty, note, date]
-
-        StockTransactionAdapter(android.content.Context ctx, List<String[]> list) {
-            this.ctx  = ctx;
-            this.list = list;
+        private final List<String[]> list;
+        StockTransactionAdapter(android.content.Context ctx, List<String[]> list) { this.ctx = ctx; this.list = list; }
+        @Override public VH onCreateViewHolder(android.view.ViewGroup parent, int viewType) {
+            return new VH(android.view.LayoutInflater.from(ctx).inflate(R.layout.item_stock_transaction, parent, false));
         }
-
-        @Override
-        public VH onCreateViewHolder(android.view.ViewGroup parent, int viewType) {
-            android.view.View v = android.view.LayoutInflater.from(ctx)
-                    .inflate(R.layout.item_stock_transaction, parent, false);
-            return new VH(v);
-        }
-
-        @Override
-        public void onBindViewHolder(VH h, int pos) {
+        @Override public void onBindViewHolder(VH h, int pos) {
             String[] row = list.get(pos);
             boolean isIn = "IN".equals(row[0]);
             h.tvType.setText(isIn ? "▲ IN" : "▼ OUT");
-            h.tvType.setTextColor(ContextCompat.getColor(ctx,
-                    isIn ? R.color.success : R.color.error));
+            h.tvType.setTextColor(ContextCompat.getColor(ctx, isIn ? R.color.success : R.color.error));
             h.tvQty.setText("Qty: " + row[1]);
             h.tvNote.setText(row[2]);
             h.tvDate.setText(row[3]);
         }
-
         @Override public int getItemCount() { return list.size(); }
-
         static class VH extends RecyclerView.ViewHolder {
             TextView tvType, tvQty, tvNote, tvDate;
-            VH(android.view.View v) {
-                super(v);
-                tvType = v.findViewById(R.id.tvTxType);
-                tvQty  = v.findViewById(R.id.tvTxQty);
-                tvNote = v.findViewById(R.id.tvTxNote);
-                tvDate = v.findViewById(R.id.tvTxDate);
-            }
+            VH(android.view.View v) { super(v); tvType = v.findViewById(R.id.tvTxType); tvQty = v.findViewById(R.id.tvTxQty); tvNote = v.findViewById(R.id.tvTxNote); tvDate = v.findViewById(R.id.tvTxDate); }
         }
     }
 }

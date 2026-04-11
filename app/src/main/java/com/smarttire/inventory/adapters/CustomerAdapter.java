@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.models.Customer;
+import com.smarttire.inventory.utils.MessageHelper;
 
 import java.util.List;
 
@@ -45,19 +47,26 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.VH> {
         h.tvDue.setText(c.getFormattedDue());
         h.tvDue.setTextColor(ContextCompat.getColor(ctx,
                 c.hasDue() ? R.color.warning : R.color.success));
+        
         h.itemView.setOnClickListener(v -> { if (listener != null) listener.onItemClick(c); });
+
+        h.btnMessage.setOnClickListener(v -> {
+            MessageHelper.sendCustomerSummarySms(ctx, c, c.getTotalAmount(), c.getTotalPaid(), c.getTotalDue());
+        });
     }
 
     @Override public int getItemCount() { return list.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
         TextView tvName, tvPhone, tvSales, tvDue;
+        ImageButton btnMessage;
         VH(@NonNull View v) {
             super(v);
             tvName  = v.findViewById(R.id.tvCustomerName);
             tvPhone = v.findViewById(R.id.tvCustomerPhone);
             tvSales = v.findViewById(R.id.tvCustomerSales);
             tvDue   = v.findViewById(R.id.tvCustomerDue);
+            btnMessage = v.findViewById(R.id.btnSendMessage);
         }
     }
 }

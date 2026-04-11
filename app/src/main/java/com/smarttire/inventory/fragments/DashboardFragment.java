@@ -1,4 +1,4 @@
-// FILE: fragments/DashboardFragment.java  (REDESIGNED — Monthly Bar Chart Analytics + Export Options)
+// FILE: fragments/DashboardFragment.java  (UPDATED — Fixed Analytics Keys and Graph Rendering)
 package com.smarttire.inventory.fragments;
 
 import android.content.Intent;
@@ -225,8 +225,9 @@ public class DashboardFragment extends Fragment {
                     if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
                         JSONObject d = response.optJSONObject(ApiConfig.KEY_DATA);
                         if (d != null) {
-                            dailyAdded   = d.optInt("total_added", 0);
-                            dailySold    = d.optInt("total_sold",  0);
+                            // Key correction: fallback to total_stock_added/total_stock_sold if total_added/total_sold is missing
+                            dailyAdded   = d.optInt("total_added", d.optInt("total_stock_added", 0));
+                            dailySold    = d.optInt("total_sold",  d.optInt("total_stock_sold", 0));
                             dailyRevenue = d.optDouble("revenue", 0);
                             cachedAddDetail  = d.optJSONArray("add_detail");
                             cachedSellDetail = d.optJSONArray("sell_detail");
@@ -251,7 +252,9 @@ public class DashboardFragment extends Fragment {
 
         if (barAdded != null) {
             barAdded.post(() -> {
+                if (barAdded.getParent() == null) return;
                 int totalWidth = ((ViewGroup)barAdded.getParent()).getWidth();
+                if (totalWidth <= 0) return;
                 ViewGroup.LayoutParams lp = barAdded.getLayoutParams();
                 lp.width = (int)(totalWidth * ((float)dailyAdded / max));
                 barAdded.setLayoutParams(lp);
@@ -259,7 +262,9 @@ public class DashboardFragment extends Fragment {
         }
         if (barSold != null) {
             barSold.post(() -> {
+                if (barSold.getParent() == null) return;
                 int totalWidth = ((ViewGroup)barSold.getParent()).getWidth();
+                if (totalWidth <= 0) return;
                 ViewGroup.LayoutParams lp = barSold.getLayoutParams();
                 lp.width = (int)(totalWidth * ((float)dailySold / max));
                 barSold.setLayoutParams(lp);
@@ -342,9 +347,15 @@ public class DashboardFragment extends Fragment {
         for (int i = 0; i < data.length(); i++) {
             JSONObject obj = data.getJSONObject(i);
             float val = 0;
-            if (currentChartEntity.equals("revenue")) val = (float) obj.optDouble("revenue", 0);
-            else if (currentChartEntity.equals("sales_qty")) val = (float) obj.optInt("total_sold_qty", 0);
-            else if (currentChartEntity.equals("stock_added")) val = (float) obj.optInt("total_added_qty", 0);
+            if (currentChartEntity.equals("revenue")) {
+                val = (float) obj.optDouble("revenue", obj.optDouble("total_revenue", 0));
+            } else if (currentChartEntity.equals("sales_qty")) {
+                // Key correction: check multiple possible keys from API
+                val = (float) obj.optInt("total_sold", obj.optInt("total_qty_sold", obj.optInt("total_sold_qty", 0)));
+            } else if (currentChartEntity.equals("stock_added")) {
+                // Key correction: check multiple possible keys from API
+                val = (float) obj.optInt("total_added", obj.optInt("total_stock_added", obj.optInt("total_added_qty", 0)));
+            }
             
             entries.add(new BarEntry(i, val));
             labels.add(obj.optString("month_name", "Month"));
@@ -426,8 +437,8 @@ public class DashboardFragment extends Fragment {
                     if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
                         JSONObject d = response.optJSONObject(ApiConfig.KEY_DATA);
                         if (d != null) {
-                            int added = d.optInt("total_added", 0);
-                            int sold = d.optInt("total_sold", 0);
+                            int added = d.optInt("total_added", d.optInt("total_stock_added", 0));
+                            int sold = d.optInt("total_sold", d.optInt("total_stock_sold", 0));
                             double rev = d.optDouble("revenue", 0);
                             JSONArray addDet = d.optJSONArray("add_detail");
                             JSONArray sellDet = d.optJSONArray("sell_detail");

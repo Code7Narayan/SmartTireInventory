@@ -1,4 +1,4 @@
-// FILE: fragments/SalesHistoryFragment.java (CLEAN INDUSTRY STANDARD)
+// FILE: fragments/SalesHistoryFragment.java (UPDATED — added PDF Export logic)
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
@@ -28,10 +28,12 @@ import com.smarttire.inventory.models.SaleRecord;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
 import com.smarttire.inventory.utils.DateUtils;
+import com.smarttire.inventory.utils.SalesHistoryPdfGenerator;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +45,7 @@ public class SalesHistoryFragment extends Fragment {
     private RecyclerView rvSales;
     private ProgressBar progressBar;
     private View layoutEmpty;
-    private TextView tvSummary, tvTotalRevenue;
+    private TextView tvSummary, tvTotalRevenue, tvTotalDue;
     private TextInputEditText etSearch;
     private MaterialButton btnDateFilter, btnExport;
     private Chip chipDateRange;
@@ -53,6 +55,8 @@ public class SalesHistoryFragment extends Fragment {
     private final List<SaleRecord> salesList = new ArrayList<>();
     
     private String startDate = "", endDate = "";
+    private double currentTotalRevenue = 0;
+    private double currentTotalDue = 0;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -69,6 +73,7 @@ public class SalesHistoryFragment extends Fragment {
         
         swipeRefresh.setOnRefreshListener(this::loadSales);
         btnDateFilter.setOnClickListener(v -> showDatePicker());
+        btnExport.setOnClickListener(v -> exportPdf());
         
         loadSales();
     }
@@ -79,6 +84,7 @@ public class SalesHistoryFragment extends Fragment {
         progressBar = v.findViewById(R.id.progressBar);
         layoutEmpty = v.findViewById(R.id.layoutEmpty);
         tvSummary = v.findViewById(R.id.tvSalesSummary);
+        tvTotalDue = v.findViewById(R.id.tvSalesTotalDue);
         tvTotalRevenue = v.findViewById(R.id.tvSalesTotalRevenue);
         etSearch = v.findViewById(R.id.etSearchSales);
         btnDateFilter = v.findViewById(R.id.btnDateFilter);
@@ -107,14 +113,34 @@ public class SalesHistoryFragment extends Fragment {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 adapter.filter(s.toString());
+                updateSummaryFromAdapter();
             }
             @Override public void afterTextChanged(Editable s) {}
         });
     }
 
+    private void updateSummaryFromAdapter() {
+        // Recalculate summary based on filtered items
+        double totalRev = 0;
+        double totalDue = 0;
+        List<SaleRecord> filteredList = adapter.getDisplayList();
+        for (SaleRecord s : filteredList) {
+            totalRev += s.getTotalPrice();
+            totalDue += s.getRemainingAmount();
+        }
+        currentTotalRevenue = totalRev;
+        currentTotalDue = totalDue;
+        
+        tvSummary.setText(filteredList.size() + " Sales");
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en","IN"));
+        tvTotalRevenue.setText(fmt.format(totalRev));
+        tvTotalDue.setText(fmt.format(totalDue));
+    }
+
     private void loadSales() {
         swipeRefresh.setRefreshing(true);
-        api.getSalesHistory("", startDate, endDate, 1, new ApiService.ApiCallback() {
+        // Corrected arguments: added status ("") and page (1)
+        api.getSalesHistory("", startDate, endDate, 0, "", 1, new ApiService.ApiCallback() {
             @Override public void onSuccess(JSONObject response) {
                 if (!isAdded()) return;
                 swipeRefresh.setRefreshing(false);
@@ -122,15 +148,21 @@ public class SalesHistoryFragment extends Fragment {
                     if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
                         JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
                         salesList.clear();
-                        double totalRev = 0;
+                        currentTotalRevenue = 0;
+                        currentTotalDue = 0;
                         for (int i = 0; i < data.length(); i++) {
                             SaleRecord record = SaleRecord.fromJSON(data.getJSONObject(i));
                             salesList.add(record);
-                            totalRev += record.getTotalPrice();
+                            currentTotalRevenue += record.getTotalPrice();
+                            currentTotalDue += record.getRemainingAmount();
                         }
                         adapter.updateData(salesList);
                         tvSummary.setText(salesList.size() + " Sales");
-                        tvTotalRevenue.setText(NumberFormat.getCurrencyInstance(new Locale("en","IN")).format(totalRev));
+                        
+                        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en","IN"));
+                        tvTotalRevenue.setText(fmt.format(currentTotalRevenue));
+                        tvTotalDue.setText(fmt.format(currentTotalDue));
+                        
                         layoutEmpty.setVisibility(salesList.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                 } catch (Exception e) { e.printStackTrace(); }
@@ -155,5 +187,22 @@ public class SalesHistoryFragment extends Fragment {
             loadSales();
         });
         picker.show(getParentFragmentManager(), "DATE_PICKER");
+    }
+
+    private void exportPdf() {
+        List<SaleRecord> listToExport = adapter.getDisplayList();
+        if (listToExport.isEmpty()) {
+            Toast.makeText(requireContext(), "No data to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String range = startDate.isEmpty() ? "All Time" : (startDate + " to " + endDate);
+        SalesHistoryPdfGenerator gen = new SalesHistoryPdfGenerator(requireContext());
+        File file = gen.generate(listToExport, range, currentTotalRevenue, currentTotalDue);
+        if (file != null) {
+            gen.openPdf(file);
+        } else {
+            Toast.makeText(requireContext(), "Failed to generate PDF", Toast.LENGTH_SHORT).show();
+        }
     }
 }

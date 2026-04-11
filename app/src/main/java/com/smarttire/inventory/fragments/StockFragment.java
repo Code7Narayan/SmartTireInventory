@@ -225,6 +225,7 @@ public class StockFragment extends Fragment {
         p.setTireSize(o.getString("tire_size"));
         p.setQuantity(o.getInt("quantity"));
         p.setPrice(o.getDouble("price"));
+        p.setCostPrice(o.optDouble("cost_price", 0.0));
         return p;
     }
 }
