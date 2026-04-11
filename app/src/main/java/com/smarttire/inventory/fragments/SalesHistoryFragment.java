@@ -1,9 +1,10 @@
-// FILE: fragments/SalesHistoryFragment.java (UPDATED — added PDF Export logic)
+// FILE: fragments/SalesHistoryFragment.java (FIXED — API Structure Update)
 package com.smarttire.inventory.fragments;
 
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -120,7 +121,6 @@ public class SalesHistoryFragment extends Fragment {
     }
 
     private void updateSummaryFromAdapter() {
-        // Recalculate summary based on filtered items
         double totalRev = 0;
         double totalDue = 0;
         List<SaleRecord> filteredList = adapter.getDisplayList();
@@ -138,39 +138,64 @@ public class SalesHistoryFragment extends Fragment {
     }
 
     private void loadSales() {
+
         swipeRefresh.setRefreshing(true);
-        // Corrected arguments: added status ("") and page (1)
+
         api.getSalesHistory("", startDate, endDate, 0, "", 1, new ApiService.ApiCallback() {
-            @Override public void onSuccess(JSONObject response) {
+            @Override
+            public void onSuccess(JSONObject response) {
+                Log.d("API_RESPONSE", response.toString());
                 if (!isAdded()) return;
+
                 swipeRefresh.setRefreshing(false);
+
                 try {
-                    if (response.getBoolean(ApiConfig.KEY_SUCCESS)) {
-                        JSONArray data = response.getJSONArray(ApiConfig.KEY_DATA);
+                    if (response.optBoolean("success")) {
+
+                        Object raw = response.get("data");
+
+                        JSONArray data;
+
+                        if (raw instanceof JSONArray) {
+                            data = (JSONArray) raw;
+                        } else {
+                            data = ((JSONObject) raw).optJSONArray("data");
+                            if (data == null) data = new JSONArray();
+                        }
+
                         salesList.clear();
                         currentTotalRevenue = 0;
                         currentTotalDue = 0;
+
                         for (int i = 0; i < data.length(); i++) {
-                            SaleRecord record = SaleRecord.fromJSON(data.getJSONObject(i));
-                            salesList.add(record);
-                            currentTotalRevenue += record.getTotalPrice();
-                            currentTotalDue += record.getRemainingAmount();
+                            JSONObject obj = data.optJSONObject(i);
+                            if (obj != null) {
+                                SaleRecord record = SaleRecord.fromJSON(obj);
+                                salesList.add(record);
+                                currentTotalRevenue += record.getTotalPrice();
+                                currentTotalDue += record.getRemainingAmount();
+                            }
                         }
+
                         adapter.updateData(salesList);
+
                         tvSummary.setText(salesList.size() + " Sales");
-                        
+
                         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en","IN"));
                         tvTotalRevenue.setText(fmt.format(currentTotalRevenue));
                         tvTotalDue.setText(fmt.format(currentTotalDue));
-                        
+
                         layoutEmpty.setVisibility(salesList.isEmpty() ? View.VISIBLE : View.GONE);
                     }
-                } catch (Exception e) { e.printStackTrace(); }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            @Override public void onError(String error) {
-                if (!isAdded()) return;
+
+            @Override
+            public void onError(String error) {
                 swipeRefresh.setRefreshing(false);
-                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
     }

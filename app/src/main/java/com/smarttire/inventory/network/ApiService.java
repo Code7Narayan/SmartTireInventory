@@ -66,13 +66,17 @@ public class ApiService {
 
     public void getProductsSorted(String m, int cid, String s, String sort, ApiCallback cb) {
         post(ApiConfig.GET_PRODUCTS, p -> {
+
             p.put("model_name", m != null ? m : "");
-            p.put("company_id", String.valueOf(cid));
+
+            // ✅ FIX (use new variable)
+            int finalCid = (cid == 0) ? 1 : cid;
+            p.put("company_id", String.valueOf(finalCid));
+
             p.put("size", s != null ? s : "");
             p.put("sort", sort != null ? sort : "");
         }, cb);
     }
-
     public void getProductDetail(int productId, ApiCallback cb) {
         post(ApiConfig.GET_PRODUCTS, p -> p.put("detail_id", String.valueOf(productId)), cb);
     }

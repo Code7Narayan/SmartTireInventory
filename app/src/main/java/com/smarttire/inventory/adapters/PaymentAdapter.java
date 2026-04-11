@@ -25,6 +25,12 @@ public class PaymentAdapter extends RecyclerView.Adapter<PaymentAdapter.VH> {
         this.list = list;
     }
 
+    public void updateData(List<Payment> newData) {
+        this.list.clear();
+        this.list.addAll(newData);
+        notifyDataSetChanged();
+    }
+
     @NonNull @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new VH(LayoutInflater.from(ctx).inflate(R.layout.item_payment, parent, false));

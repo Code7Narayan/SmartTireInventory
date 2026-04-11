@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_stock.xml  (REDESIGNED — grouped model list, clean) -->
+<!--
+  FILE: res/layout/fragment_stock.xml  (OPTIMIZED)
+  KEY FIXES:
+    • RecyclerView is now the direct child of SwipeRefreshLayout — no NestedScrollView wrapping
+      a RecyclerView, which caused the dreaded onMeasure loop and ANR.
+    • Filter row sits above the SwipeRefreshLayout so it is always visible.
+    • ProgressBar overlaps the RecyclerView via FrameLayout (no extra layout pass).
+    • SwipeRefreshLayout takes all remaining height (0dp + weight=1).
+-->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,7 +16,7 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Search bar -->
+    <!-- ── Search bar ──────────────────────────────────────────────────────── -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
@@ -18,16 +26,19 @@
         android:layout_marginBottom="@dimen/margin_small"
         app:startIconDrawable="@drawable/ic_search"
         app:boxStrokeColor="@color/primary">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Search by model, company, size…"
             android:inputType="text"
-            android:maxLines="1"/>
+            android:maxLines="1"
+            android:imeOptions="actionSearch"/>
+
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Filter + Export row -->
+    <!-- ── Filter + Export row ────────────────────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -44,12 +55,14 @@
             android:layout_marginEnd="6dp"
             android:hint="Company"
             app:boxStrokeColor="@color/primary">
+
             <AutoCompleteTextView
                 android:id="@+id/spinnerCompanyFilter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
                 android:padding="10dp"/>
+
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -62,37 +75,54 @@
             app:strokeColor="@color/primary"
             app:icon="@drawable/ic_pdf"
             app:iconGravity="textStart"/>
+
     </LinearLayout>
 
-    <!-- Stock list -->
+    <!--
+      ── List area ─────────────────────────────────────────────────────────────
+      SwipeRefreshLayout DIRECTLY wraps a FrameLayout that holds:
+        • RecyclerView  (fills all space)
+        • ProgressBar   (centered overlay)
+        • Empty state   (centered overlay)
+      NO NestedScrollView between SwipeRefreshLayout and RecyclerView.
+    -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <!-- RecyclerView — match_parent height; SwipeRefreshLayout provides scroll -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvStock"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="@dimen/padding_small"
-                android:clipToPadding="false"/>
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="true"/>
 
+            <!-- Empty state overlay -->
             <LinearLayout
                 android:id="@+id/layoutEmpty"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:visibility="gone">
+
                 <ImageView
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:src="@drawable/ic_stock"
-                    android:tint="@color/text_hint"/>
+                    android:tint="@color/text_hint"
+                    android:contentDescription="No stock"/>
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -100,8 +130,10 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/text_size_medium"
                     android:layout_marginTop="@dimen/margin_medium"/>
+
             </LinearLayout>
 
+            <!-- Loading indicator overlay -->
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
@@ -110,6 +142,7 @@
                 android:visibility="gone"/>
 
         </FrameLayout>
+
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </LinearLayout>

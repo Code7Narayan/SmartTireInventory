@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_dashboard.xml  (REDESIGNED — clean minimal daily insights + Monthly Graph) -->
+<!--
+  FILE: res/layout/fragment_dashboard.xml  (OPTIMIZED)
+  KEY FIXES:
+    • All RecyclerViews have android:nestedScrollingEnabled="false" so only
+      the outer NestedScrollView scrolls — no double-scroll conflict.
+    • RecyclerViews use wrap_content height (acceptable here because they show
+      a small fixed number of items, typically ≤ 5). For large lists, replace
+      with a different pattern (e.g. a single RecyclerView with multiple item
+      types). The critical rule is that nestedScrollingEnabled must be false.
+    • Removed redundant layout containers and reduced view depth.
+    • ProgressBar position is an overlay via FrameLayout, not an extra pass.
+    • BarChart gets a fixed 250dp height to avoid re-measuring.
+-->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,10 +19,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!--
+      NestedScrollView is the ONLY scrollable container here.
+      All RecyclerViews inside must have nestedScrollingEnabled=false.
+    -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/background">
+        android:background="@color/background"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -18,7 +35,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- ── Header: Title + Export ─────────────────────────────────── -->
+            <!-- ── Header ─────────────────────────────────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -31,6 +48,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -38,6 +56,7 @@
                         android:textColor="@color/text_primary"
                         android:textSize="24sp"
                         android:textStyle="bold"/>
+
                     <TextView
                         android:id="@+id/tvDashboardDate"
                         android:layout_width="wrap_content"
@@ -45,6 +64,7 @@
                         android:textColor="@color/text_hint"
                         android:textSize="12sp"
                         android:text="Today"/>
+
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
@@ -57,9 +77,10 @@
                     app:strokeColor="@color/primary"
                     app:icon="@drawable/ic_pdf"
                     app:iconGravity="textStart"/>
+
             </LinearLayout>
 
-            <!-- ── Top 4 KPI Cards: Stock + Revenue ───────────────────────── -->
+            <!-- ── KPI Cards 2×2 ──────────────────────────────────────────── -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -67,7 +88,6 @@
                 android:useDefaultMargins="true"
                 android:layout_marginBottom="8dp">
 
-                <!-- Total Stock Available -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardTotalStock"
                     android:layout_width="0dp"
@@ -77,7 +97,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center"
                         android:padding="8dp">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp"
@@ -93,7 +114,6 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Today Revenue -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardRevenue"
                     android:layout_width="0dp"
@@ -103,7 +123,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center"
                         android:padding="8dp">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp"
@@ -120,7 +141,6 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Date Added Stock -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardAddedStock"
                     android:layout_width="0dp"
@@ -130,7 +150,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center"
                         android:padding="8dp">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp"
@@ -146,7 +167,6 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Date Sold Stock -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardSoldStock"
                     android:layout_width="0dp"
@@ -156,7 +176,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical" android:gravity="center"
                         android:padding="8dp">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp"
@@ -174,7 +195,7 @@
 
             </GridLayout>
 
-            <!-- ── Monthly Performance Bar Graph ──────────────────────────────── -->
+            <!-- ── Monthly Bar Chart ─────────────────────────────────────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -182,6 +203,7 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/card_background">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -194,6 +216,7 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="8dp">
+
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -213,16 +236,19 @@
                             android:textSize="12sp"
                             app:icon="@drawable/ic_menu"
                             app:iconSize="14dp"/>
+
                     </LinearLayout>
 
+                    <!-- Fixed height prevents infinite measure cycle -->
                     <com.github.mikephil.charting.charts.BarChart
                         android:id="@+id/barChartMonthly"
                         android:layout_width="match_parent"
                         android:layout_height="250dp"/>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Added vs Sold Comparison Bar (Daily) ───────────────────────────── -->
+            <!-- ── Daily Added vs Sold ───────────────────────────────────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -230,6 +256,7 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/card_background">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -242,6 +269,7 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="16dp">
+
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -250,6 +278,7 @@
                             android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPickDate"
                             style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -258,15 +287,17 @@
                             android:text="Change Date"
                             android:textAllCaps="false"
                             app:rippleColor="@color/primary"/>
+
                     </LinearLayout>
 
-                    <!-- Added Bar -->
+                    <!-- Added bar -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="10dp">
+
                         <TextView
                             android:layout_width="72dp"
                             android:layout_height="wrap_content"
@@ -274,6 +305,7 @@
                             android:textColor="@color/primary"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
+
                         <FrameLayout
                             android:layout_width="0dp"
                             android:layout_height="22dp"
@@ -286,6 +318,7 @@
                                 android:layout_height="match_parent"
                                 android:background="@color/primary"/>
                         </FrameLayout>
+
                         <TextView
                             android:id="@+id/tvBarAddedCount"
                             android:layout_width="40dp"
@@ -295,14 +328,16 @@
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:gravity="end"/>
+
                     </LinearLayout>
 
-                    <!-- Sold Bar -->
+                    <!-- Sold bar -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
+
                         <TextView
                             android:layout_width="72dp"
                             android:layout_height="wrap_content"
@@ -310,6 +345,7 @@
                             android:textColor="@color/warning"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
+
                         <FrameLayout
                             android:layout_width="0dp"
                             android:layout_height="22dp"
@@ -322,6 +358,7 @@
                                 android:layout_height="match_parent"
                                 android:background="@color/warning"/>
                         </FrameLayout>
+
                         <TextView
                             android:id="@+id/tvBarSoldCount"
                             android:layout_width="40dp"
@@ -331,12 +368,13 @@
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:gravity="end"/>
+
                     </LinearLayout>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Secondary Stats Row: Customers + Outstanding ───────────── -->
+            <!-- ── Customers + Outstanding ───────────────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -353,7 +391,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="horizontal" android:gravity="center_vertical"
                         android:padding="8dp">
                         <ImageView android:layout_width="20dp" android:layout_height="20dp"
@@ -382,7 +421,8 @@
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="@color/card_background"
                     android:foreground="?attr/selectableItemBackground">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="horizontal" android:gravity="center_vertical"
                         android:padding="8dp">
                         <ImageView android:layout_width="20dp" android:layout_height="20dp"
@@ -400,9 +440,10 @@
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
+
             </LinearLayout>
 
-            <!-- ── Low Stock Alert ────────────────────────────────────────── -->
+            <!-- ── Low Stock section ─────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -412,12 +453,17 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp"/>
 
+            <!--
+              CRITICAL: nestedScrollingEnabled="false" prevents the inner RecyclerView
+              from intercepting touch events and competing with NestedScrollView.
+              wrap_content height is acceptable here because the low-stock list is small.
+            -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvLowStock"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="4dp"/>
 
             <TextView
                 android:id="@+id/tvNoLowStock"
@@ -430,7 +476,7 @@
                 android:padding="16dp"
                 android:visibility="gone"/>
 
-            <!-- ── Most Sold Stock ────────────────────────────────────────── -->
+            <!-- ── Most Sold section ──────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -438,6 +484,7 @@
                 android:textColor="@color/primary"
                 android:textSize="16sp"
                 android:textStyle="bold"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"/>
 
             <androidx.recyclerview.widget.RecyclerView
@@ -445,9 +492,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="4dp"/>
 
-            <!-- ── Top Debtors ─────────────────────────────────────────────── -->
+            <!-- ── Top Debtors section ────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -455,6 +502,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"/>
 
             <androidx.recyclerview.widget.RecyclerView
@@ -465,5 +513,7 @@
                 android:layout_marginBottom="24dp"/>
 
         </LinearLayout>
+
     </androidx.core.widget.NestedScrollView>
+
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

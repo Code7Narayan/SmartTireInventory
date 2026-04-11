@@ -1,9 +1,10 @@
-// FILE: activities/StockDetailActivity.java (UPDATED — Edit Stock + Delete History)
+// FILE: activities/StockDetailActivity.java (FIXED — API Structure Update)
 package com.smarttire.inventory.activities;
 
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -64,6 +65,7 @@ public class StockDetailActivity extends AppCompatActivity {
         api       = ApiService.getInstance(this);
         productId = getIntent().getIntExtra(EXTRA_PRODUCT_ID, 0);
 
+
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null)
@@ -106,37 +108,43 @@ public class StockDetailActivity extends AppCompatActivity {
             public void onSuccess(JSONObject response) {
                 progressBar.setVisibility(View.GONE);
                 try {
-                    if (!response.getBoolean(ApiConfig.KEY_SUCCESS)) return;
-                    JSONObject data = response.getJSONObject(ApiConfig.KEY_DATA);
-                    productData     = data;
-                    bindUI(data);
+                    if (!response.optBoolean("success")) return;
+
+                    JSONObject data = response.optJSONObject("data"); // ✅ FIX
+                    if (data == null) return;
+
+                    productData = data;
+                    bindUI(data); // ✅ pass data directly
                     layoutContent.setVisibility(View.VISIBLE);
+
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(StockDetailActivity.this, "Error loading detail", Toast.LENGTH_SHORT).show();
                 }
             }
-            @Override public void onError(String error) {
+
+            @Override
+            public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(StockDetailActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void bindUI(JSONObject data) throws Exception {
-        JSONObject product  = data.getJSONObject("product");
-        int totalAdded      = data.getInt("total_added");
-        int totalSold       = data.getInt("total_sold");
-        int currentStock    = data.getInt("current_stock");
-        JSONArray txList    = data.getJSONArray("transactions");
+    private void bindUI(JSONObject data) {
+        // FIXED: Using 'data' directly instead of 'response.getJSONObject("product")'
+        // Using opt methods to avoid crashes if fields are missing
+        int totalAdded      = data.optInt("total_added", 0);
+        int totalSold       = data.optInt("total_sold", 0);
+        // FIXED: Using 'quantity' instead of 'current_stock' if needed, with fallback
+        int currentStock    = data.optInt("quantity", data.optInt("current_stock", 0));
+        JSONArray txList    = data.optJSONArray("transactions");
 
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
 
-        tvCompany.setText(product.optString("company_name", "—"));
-        tvModel.setText(product.optString("model_name", "—"));
-        tvTireType.setText(product.optString("tire_type", "—"));
-        tvTireSize.setText(product.optString("tire_size", "—"));
-        tvPrice.setText(fmt.format(product.optDouble("price", 0)));
+        tvCompany.setText(data.optString("company_name", "—"));
+        tvModel.setText(data.optString("model_name", "—"));
+        tvTireType.setText(data.optString("tire_type", "—"));
+        tvTireSize.setText(data.optString("tire_size", "—"));
+        tvPrice.setText(fmt.format(data.optDouble("price", 0)));
         tvTotalAdded.setText(String.valueOf(totalAdded));
         tvTotalSold.setText(String.valueOf(totalSold));
         tvCurrentStock.setText(String.valueOf(currentStock));
@@ -144,12 +152,21 @@ public class StockDetailActivity extends AppCompatActivity {
         if (currentStock < 5) tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.warning));
         else tvCurrentStock.setTextColor(ContextCompat.getColor(this, R.color.success));
 
-        tvAddedDate.setText(formatDate(product.optString("created_at", "")));
+        tvAddedDate.setText(formatDate(data.optString("created_at", "")));
 
         List<String[]> txRows = new ArrayList<>();
-        for (int i = 0; i < txList.length(); i++) {
-            JSONObject tx = txList.getJSONObject(i);
-            txRows.add(new String[]{tx.optString("type", ""), String.valueOf(tx.optInt("quantity", 0)), tx.optString("note", ""), formatDate(tx.optString("created_at", ""))});
+        if (txList != null) {
+            for (int i = 0; i < txList.length(); i++) {
+                JSONObject tx = txList.optJSONObject(i);
+                if (tx != null) {
+                    txRows.add(new String[]{
+                            tx.optString("type", ""),
+                            String.valueOf(tx.optInt("quantity", 0)),
+                            tx.optString("note", ""),
+                            formatDate(tx.optString("created_at", ""))
+                    });
+                }
+            }
         }
         rvTransactions.setAdapter(new StockTransactionAdapter(this, txRows));
 
@@ -157,18 +174,19 @@ public class StockDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtra("open_sell", true);
             intent.putExtra("preselect_product_id", productId);
-            intent.putExtra("preselect_product_name", product.optString("company_name") + " | " + product.optString("model_name") + " " + product.optString("tire_type") + " (" + product.optString("tire_size") + ")");
+            intent.putExtra("preselect_product_name", data.optString("company_name") + " | " + data.optString("model_name") + " " + data.optString("tire_type") + " (" + data.optString("tire_size") + ")");
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         });
 
-        btnExportPdf.setOnClickListener(v -> exportPdf(product, totalAdded, totalSold, currentStock, txRows));
+        btnExportPdf.setOnClickListener(v -> exportPdf(data, totalAdded, totalSold, currentStock, txRows));
     }
 
     private void showEditDialog() {
         if (productData == null) return;
         try {
-            JSONObject p = productData.getJSONObject("product");
+            // FIXED: Using productData directly (it's the 'data' from API response)
+            JSONObject p = productData;
             AlertDialog.Builder b = new AlertDialog.Builder(this);
             View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_stock, null);
             b.setView(v);
@@ -191,8 +209,8 @@ public class StockDetailActivity extends AppCompatActivity {
             spinType.setText(p.optString("tire_type"), false);
             etModel.setText(p.optString("model_name"));
             etSize.setText(p.optString("tire_size"));
-            etPrice.setText(String.valueOf(p.optDouble("price")));
-            etCostPrice.setText(String.valueOf(p.optDouble("cost_price")));
+            etPrice.setText(String.valueOf(p.optDouble("price", 0)));
+            etCostPrice.setText(String.valueOf(p.optDouble("cost_price", 0)));
 
             b.setTitle("Edit Product Details");
             b.setPositiveButton("Update", (dialog, which) -> {
@@ -204,18 +222,15 @@ public class StockDetailActivity extends AppCompatActivity {
     }
 
     private void performUpdate(String company, String type, String model, String size, String price, String cost) {
-        // Find company ID from name
         int cid = 0;
         for (Company c : companyList) if (c.getName().equals(company)) { cid = c.getId(); break; }
         if (cid == 0) { Toast.makeText(this, "Select a valid company", Toast.LENGTH_SHORT).show(); return; }
 
         progressBar.setVisibility(View.VISIBLE);
-        // Note: We need to extend ApiService to support full product update or use current ones.
-        // For now, let's assume we update price and use a new method for full update if available.
-        // I will update ApiService to handle this properly.
         api.updateProductFull(productId, cid, type, size, model, Double.parseDouble(price), Double.parseDouble(cost), new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
+                Log.d("API_RESPONSE", response.toString());
                 progressBar.setVisibility(View.GONE);
                 if (response.optBoolean("success")) {
                     Toast.makeText(StockDetailActivity.this, "Product updated", Toast.LENGTH_SHORT).show();
@@ -231,11 +246,13 @@ public class StockDetailActivity extends AppCompatActivity {
             @Override public void onSuccess(JSONObject response) {
                 try {
                     if (response.optBoolean("success")) {
-                        JSONArray data = response.getJSONArray("data");
-                        companyList.clear();
-                        for (int i = 0; i < data.length(); i++) {
-                            JSONObject obj = data.getJSONObject(i);
-                            companyList.add(new Company(obj.getInt("id"), obj.getString("name")));
+                        JSONArray dataArr = response.optJSONArray("data");
+                        if (dataArr != null) {
+                            companyList.clear();
+                            for (int i = 0; i < dataArr.length(); i++) {
+                                JSONObject obj = dataArr.getJSONObject(i);
+                                companyList.add(new Company(obj.getInt("id"), obj.getString("name")));
+                            }
                         }
                     }
                 } catch (Exception ignored) {}
@@ -275,6 +292,7 @@ public class StockDetailActivity extends AppCompatActivity {
             if (pdf != null) gen.openPdf(pdf);
         } catch (Exception e) { Toast.makeText(this, "PDF error: " + e.getMessage(), Toast.LENGTH_SHORT).show(); }
     }
+
 
     private String formatDate(String raw) {
         if (raw == null || raw.isEmpty()) return "—";

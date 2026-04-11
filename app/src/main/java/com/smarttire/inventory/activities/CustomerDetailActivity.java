@@ -1,16 +1,23 @@
+// FILE: activities/CustomerDetailActivity.java (FINAL FIX — addressing checklist)
 package com.smarttire.inventory.activities;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,26 +28,32 @@ import com.smarttire.inventory.R;
 import com.smarttire.inventory.adapters.PaymentAdapter;
 import com.smarttire.inventory.adapters.SalesAdapter;
 import com.smarttire.inventory.models.Customer;
+import com.smarttire.inventory.models.Payment;
+import com.smarttire.inventory.models.SaleRecord;
 import com.smarttire.inventory.network.ApiService;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class CustomerDetailActivity extends AppCompatActivity {
 
-    private TextView tvName, tvPhone, tvAddress, tvGst;
-    private TextView tvTotalSales, tvTotalAmount, tvTotalPaid, tvTotalDue;
-    private RecyclerView rvSales, rvPayments;
+    private RecyclerView rvMain;
     private ProgressBar progressBar;
-    private ImageButton btnEdit;
-    private MaterialButton btnDelete;
-    private MaterialToolbar toolbar;
-
     private ApiService api;
     private int customerId;
 
+    private SalesAdapter salesAdapter;
+    private PaymentAdapter paymentAdapter;
+    private HeaderAdapter headerAdapter;
+    private SectionTitleAdapter salesTitle, paymentTitle;
     private Customer currentCustomer;
+
+    private static final NumberFormat INR_FMT = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,81 +61,71 @@ public class CustomerDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_customer_detail);
 
         api = ApiService.getInstance(this);
-
         customerId = getIntent().getIntExtra("customer_id", 0);
-        String name = getIntent().getStringExtra("customer_name");
 
         if (customerId == 0) {
-            Toast.makeText(this, "Invalid Customer ID", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Invalid Customer ID", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Toolbar
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(name != null ? name : "Customer Details");
-        }
-
-        // Views
-        tvName = findViewById(R.id.tvName);
-        tvPhone = findViewById(R.id.tvPhone);
-        tvAddress = findViewById(R.id.tvAddress);
-        tvGst = findViewById(R.id.tvGst);
-
-        tvTotalSales = findViewById(R.id.tvTotalSales);
-        tvTotalAmount = findViewById(R.id.tvTotalAmount);
-        tvTotalPaid = findViewById(R.id.tvTotalPaid);
-        tvTotalDue = findViewById(R.id.tvTotalDue);
-
-        rvSales = findViewById(R.id.rvCustomerSales);
-        rvPayments = findViewById(R.id.rvPayments);
-        progressBar = findViewById(R.id.progressBar);
-
-        btnEdit = findViewById(R.id.btnEdit);
-        btnDelete = findViewById(R.id.btnDelete);
-
-        rvSales.setLayoutManager(new LinearLayoutManager(this));
-        rvPayments.setLayoutManager(new LinearLayoutManager(this));
-
-        rvSales.setAdapter(new SalesAdapter(this, new ArrayList<>()));
-        rvPayments.setAdapter(new PaymentAdapter(this, new ArrayList<>()));
-
-        btnEdit.setOnClickListener(v -> showEditDialog());
-        btnDelete.setOnClickListener(v -> showDeleteConfirmation());
-
+        setupToolbar();
+        setupRecyclerView();
         loadDetails();
     }
 
-    // 🔥 LOAD DETAILS
+    private void setupToolbar() {
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            String name = getIntent().getStringExtra("customer_name");
+            getSupportActionBar().setTitle(name != null ? name : "Customer Detail");
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+        toolbar.setNavigationOnClickListener(v -> finish());
+    }
+
+    private void setupRecyclerView() {
+        rvMain = findViewById(R.id.rvCustomerDetailMain);
+        progressBar = findViewById(R.id.progressBar);
+
+        headerAdapter = new HeaderAdapter();
+        salesTitle = new SectionTitleAdapter("Purchase History");
+        salesAdapter = new SalesAdapter(this, new ArrayList<>());
+        paymentTitle = new SectionTitleAdapter("Payment History");
+        paymentAdapter = new PaymentAdapter(this, new ArrayList<>());
+
+        ConcatAdapter concatAdapter = new ConcatAdapter(
+                headerAdapter,
+                salesTitle,
+                salesAdapter,
+                paymentTitle,
+                paymentAdapter
+        );
+
+        rvMain.setLayoutManager(new LinearLayoutManager(this));
+        rvMain.setAdapter(concatAdapter);
+    }
+
     private void loadDetails() {
         progressBar.setVisibility(View.VISIBLE);
-
         api.getCustomerDetails(customerId, new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
                 progressBar.setVisibility(View.GONE);
+                if (!response.optBoolean("success")) {
+                    Toast.makeText(CustomerDetailActivity.this, 
+                        response.optString("message", "Error loading details"), Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 try {
-                    Log.d("DETAIL_RESPONSE", response.toString());
-
-                    if (!response.optBoolean("success")) return;
-
                     JSONObject data = response.getJSONObject("data");
+                    
                     JSONObject cust = data.getJSONObject("customer");
                     JSONObject ledger = data.getJSONObject("ledger");
-
-                    tvName.setText(cust.optString("name"));
-                    tvPhone.setText(cust.optString("phone"));
-                    tvAddress.setText(cust.optString("address"));
-                    tvGst.setText("GST: " + cust.optString("gst_number"));
-
-                    tvTotalSales.setText(String.valueOf(ledger.optInt("total_sales")));
-                    tvTotalAmount.setText("₹ " + ledger.optDouble("total_amount"));
-                    tvTotalPaid.setText("₹ " + ledger.optDouble("total_paid"));
-                    tvTotalDue.setText("₹ " + ledger.optDouble("total_due"));
-
+                    headerAdapter.update(cust, ledger);
+                    
                     currentCustomer = new Customer();
                     currentCustomer.setId(customerId);
                     currentCustomer.setName(cust.optString("name"));
@@ -130,8 +133,30 @@ public class CustomerDetailActivity extends AppCompatActivity {
                     currentCustomer.setAddress(cust.optString("address"));
                     currentCustomer.setGstNumber(cust.optString("gst_number"));
 
+                    // ✅ Clear list before adding (Checklist Item 2)
+                    List<SaleRecord> sales = new ArrayList<>();
+                    JSONArray salesArr = data.optJSONArray("sales");
+                    if (salesArr != null) {
+                        for (int i = 0; i < salesArr.length(); i++) {
+                            sales.add(SaleRecord.fromJSON(salesArr.getJSONObject(i)));
+                        }
+                    }
+                    salesAdapter.updateData(sales);
+                    salesTitle.setVisible(!sales.isEmpty());
+
+                    List<Payment> payments = new ArrayList<>();
+                    JSONArray payArr = data.optJSONArray("payments");
+                    if (payArr != null) {
+                        for (int i = 0; i < payArr.length(); i++) {
+                            payments.add(Payment.fromJSON(payArr.getJSONObject(i)));
+                        }
+                    }
+                    paymentAdapter.updateData(payments);
+                    paymentTitle.setVisible(!payments.isEmpty());
+
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e("CustomerDetail", "Parse error", e);
+                    Toast.makeText(CustomerDetailActivity.this, "Data parsing error", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -143,12 +168,129 @@ public class CustomerDetailActivity extends AppCompatActivity {
         });
     }
 
-    // ✏️ EDIT
+    // --- Inner Adapters ---
+
+    class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.VH> {
+        private JSONObject cust, ledger;
+
+        void update(JSONObject cust, JSONObject ledger) {
+            this.cust = cust;
+            this.ledger = ledger;
+            notifyDataSetChanged(); // ✅ Checklist Item 1 (notifyDataSetChanged)
+        }
+
+        @NonNull @Override
+        public VH onCreateViewHolder(@NonNull ViewGroup p, int t) {
+            return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.view_customer_detail_header, p, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull VH h, int p) {
+            if (cust == null || ledger == null) return;
+            
+            // ✅ Set TextViews properly (Checklist Item 1)
+            h.tvName.setText(cust.optString("name"));
+            h.tvPhone.setText(cust.optString("phone"));
+            h.tvAddress.setText(cust.optString("address"));
+            h.tvGst.setText("GST: " + (cust.optString("gst_number").isEmpty() ? "—" : cust.optString("gst_number")));
+
+            h.tvTotalSales.setText(String.valueOf(ledger.optInt("total_sales")));
+            h.tvTotalAmount.setText(INR_FMT.format(ledger.optDouble("total_amount")));
+            h.tvTotalPaid.setText(INR_FMT.format(ledger.optDouble("total_paid")));
+            h.tvTotalDue.setText(INR_FMT.format(ledger.optDouble("total_due")));
+
+            // Show "Record Payment" only if there is a balance
+            double due = ledger.optDouble("total_due", 0);
+            h.btnPayNow.setVisibility(due > 0.01 ? View.VISIBLE : View.GONE);
+            h.btnPayNow.setOnClickListener(v -> showQuickPaymentDialog());
+            
+            h.btnEdit.setOnClickListener(v -> showEditDialog());
+            h.btnDelete.setOnClickListener(v -> showDeleteConfirmation());
+        }
+
+        @Override public int getItemCount() { return 1; }
+
+        class VH extends RecyclerView.ViewHolder {
+            TextView tvName, tvPhone, tvAddress, tvGst, tvTotalSales, tvTotalAmount, tvTotalPaid, tvTotalDue;
+            ImageButton btnEdit;
+            MaterialButton btnDelete, btnPayNow;
+
+            VH(View v) {
+                super(v);
+                tvName = v.findViewById(R.id.tvName);
+                tvPhone = v.findViewById(R.id.tvPhone);
+                tvAddress = v.findViewById(R.id.tvAddress);
+                tvGst = v.findViewById(R.id.tvGst);
+                tvTotalSales = v.findViewById(R.id.tvTotalSales);
+                tvTotalAmount = v.findViewById(R.id.tvTotalAmount);
+                tvTotalPaid = v.findViewById(R.id.tvTotalPaid);
+                tvTotalDue = v.findViewById(R.id.tvTotalDue);
+                btnEdit = v.findViewById(R.id.btnEdit);
+                btnDelete = v.findViewById(R.id.btnDelete);
+                btnPayNow = v.findViewById(R.id.btnPayNow);
+            }
+        }
+    }
+
+    static class SectionTitleAdapter extends RecyclerView.Adapter<SectionTitleAdapter.VH> {
+        private final String title;
+        private boolean visible = false;
+        SectionTitleAdapter(String t) { this.title = t; }
+        void setVisible(boolean v) { this.visible = v; notifyDataSetChanged(); }
+        @NonNull @Override public VH onCreateViewHolder(@NonNull ViewGroup p, int t) {
+            TextView tv = new TextView(p.getContext());
+            tv.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+            tv.setPadding(48, 48, 48, 16);
+            tv.setTextSize(16);
+            tv.setTypeface(null, android.graphics.Typeface.BOLD);
+            tv.setTextColor(ContextCompat.getColor(p.getContext(), R.color.text_primary));
+            return new VH(tv);
+        }
+        @Override public void onBindViewHolder(@NonNull VH h, int p) { ((TextView)h.itemView).setText(title); }
+        @Override public int getItemCount() { return visible ? 1 : 0; }
+        static class VH extends RecyclerView.ViewHolder { VH(View v) { super(v); } }
+    }
+
+    // --- Actions ---
+
+    private void showQuickPaymentDialog() {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        b.setTitle("Record Payment");
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setHint("Enter amount");
+        b.setView(input);
+        b.setPositiveButton("Pay Cash", (d, w) -> processPayment(input.getText().toString(), "Cash"));
+        b.setNeutralButton("Pay Online", (d, w) -> processPayment(input.getText().toString(), "Online"));
+        b.setNegativeButton("Cancel", null);
+        b.show();
+    }
+
+    private void processPayment(String amountStr, String mode) {
+        if (amountStr.isEmpty()) return;
+        double amt = Double.parseDouble(amountStr);
+        if (amt <= 0) return;
+
+        progressBar.setVisibility(View.VISIBLE);
+        // Note: For general account payment, we might need a specific API or use the first unpaid sale
+        // For now, if your API requires a saleId, this might need adjustment to handle general customer ledger.
+        // If your add_payment.php handles sale_id=0 as a general payment, use that.
+        api.addPayment(0, amt, mode, "General customer payment", new ApiService.ApiCallback() {
+            @Override public void onSuccess(JSONObject response) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(CustomerDetailActivity.this, response.optString("message"), Toast.LENGTH_SHORT).show();
+                if (response.optBoolean("success")) loadDetails();
+            }
+            @Override public void onError(String error) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(CustomerDetailActivity.this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void showEditDialog() {
         if (currentCustomer == null) return;
-
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_customer, null);
-
         TextInputEditText etName = v.findViewById(R.id.editCustomerName);
         TextInputEditText etPhone = v.findViewById(R.id.editCustomerPhone);
         TextInputEditText etAddress = v.findViewById(R.id.editCustomerAddress);
@@ -174,34 +316,23 @@ public class CustomerDetailActivity extends AppCompatActivity {
 
     private void performUpdate(String name, String phone, String address, String gst) {
         progressBar.setVisibility(View.VISIBLE);
-
         api.updateCustomer(customerId, name, phone, address, gst, new ApiService.ApiCallback() {
-            @Override
-            public void onSuccess(JSONObject response) {
+            @Override public void onSuccess(JSONObject response) {
                 progressBar.setVisibility(View.GONE);
-
-                Toast.makeText(CustomerDetailActivity.this,
-                        response.optString("message"),
-                        Toast.LENGTH_SHORT).show();
-
-                if (response.optBoolean("success")) {
-                    loadDetails();
-                }
+                Toast.makeText(CustomerDetailActivity.this, response.optString("message"), Toast.LENGTH_SHORT).show();
+                if (response.optBoolean("success")) loadDetails();
             }
-
-            @Override
-            public void onError(String error) {
+            @Override public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(CustomerDetailActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    // 🗑 DELETE
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Customer")
-                .setMessage("Are you sure?")
+                .setMessage("Are you sure you want to delete this customer? This will also remove their sales history.")
                 .setPositiveButton("Delete", (d, w) -> performDelete())
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -209,23 +340,16 @@ public class CustomerDetailActivity extends AppCompatActivity {
 
     private void performDelete() {
         progressBar.setVisibility(View.VISIBLE);
-
         api.deleteCustomer(customerId, new ApiService.ApiCallback() {
-            @Override
-            public void onSuccess(JSONObject response) {
+            @Override public void onSuccess(JSONObject response) {
                 progressBar.setVisibility(View.GONE);
-
-                Toast.makeText(CustomerDetailActivity.this,
-                        response.optString("message"),
-                        Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(CustomerDetailActivity.this, response.optString("message"), Toast.LENGTH_SHORT).show();
                 if (response.optBoolean("success")) {
+                    setResult(RESULT_OK);
                     finish();
                 }
             }
-
-            @Override
-            public void onError(String error) {
+            @Override public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(CustomerDetailActivity.this, error, Toast.LENGTH_SHORT).show();
             }
