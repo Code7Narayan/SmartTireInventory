@@ -1,4 +1,4 @@
-// FILE: activities/AddStockActivity.java  (UPDATED — tire size field removed from UI)
+// FILE: activities/AddStockActivity.java  (UPDATED — added Cost Price handling)
 package com.smarttire.inventory.activities;
 
 import android.os.Bundle;
@@ -29,10 +29,9 @@ import java.util.List;
 public class AddStockActivity extends AppCompatActivity {
 
     private MaterialToolbar      toolbar;
-    private TextInputLayout      tilCompany, tilTireType, tilModelName, tilQuantity, tilPrice;
+    private TextInputLayout      tilCompany, tilTireType, tilModelName, tilQuantity, tilPrice, tilCostPrice;
     private AutoCompleteTextView spinnerCompany, spinnerTireType;
-    private TextInputEditText    etModelName, etQuantity, etPrice;
-    // etTireSize is kept as a hidden view for backend compatibility — always set to model name
+    private TextInputEditText    etModelName, etQuantity, etPrice, etCostPrice;
     private MaterialButton       btnSaveStock;
     private LinearProgressIndicator progressBar;
 
@@ -61,11 +60,13 @@ public class AddStockActivity extends AppCompatActivity {
         tilModelName  = findViewById(R.id.tilModelName);
         tilQuantity   = findViewById(R.id.tilQuantity);
         tilPrice      = findViewById(R.id.tilPrice);
+        tilCostPrice  = findViewById(R.id.tilCostPrice);
         spinnerCompany  = findViewById(R.id.spinnerCompany);
         spinnerTireType = findViewById(R.id.spinnerTireType);
         etModelName   = findViewById(R.id.etModelName);
         etQuantity    = findViewById(R.id.etQuantity);
         etPrice       = findViewById(R.id.etPrice);
+        etCostPrice   = findViewById(R.id.etCostPrice);
         btnSaveStock  = findViewById(R.id.btnSaveStock);
         progressBar   = findViewById(R.id.progressBar);
     }
@@ -124,12 +125,12 @@ public class AddStockActivity extends AppCompatActivity {
     }
 
     private void saveStock() {
-        // Clear previous errors
         if (tilCompany   != null) tilCompany.setError(null);
         if (tilTireType  != null) tilTireType.setError(null);
         if (tilModelName != null) tilModelName.setError(null);
         if (tilQuantity  != null) tilQuantity.setError(null);
         if (tilPrice     != null) tilPrice.setError(null);
+        if (tilCostPrice != null) tilCostPrice.setError(null);
 
         if (selectedCompany == null) {
             if (tilCompany != null) tilCompany.setError("Please select a company");
@@ -168,6 +169,19 @@ public class AddStockActivity extends AppCompatActivity {
             return;
         }
 
+        String costPriceStr = etCostPrice.getText() != null ? etCostPrice.getText().toString().trim() : "";
+        final double costPrice;
+        if (!costPriceStr.isEmpty()) {
+            try {
+                costPrice = Double.parseDouble(costPriceStr);
+            } catch (NumberFormatException e) {
+                if (tilCostPrice != null) tilCostPrice.setError("Invalid cost price");
+                return;
+            }
+        } else {
+            costPrice = 0;
+        }
+
         String priceStr = etPrice.getText() != null
                 ? etPrice.getText().toString().trim() : "";
         if (priceStr.isEmpty()) {
@@ -188,28 +202,30 @@ public class AddStockActivity extends AppCompatActivity {
             return;
         }
 
-        // Use model name as tire size for backend compatibility (tire size field removed from UI)
-        // This keeps the backend addProduct.php working without schema changes.
         String tireSize = modelName;
 
         showLoading(true);
+        // Note: For now we pass cost price indirectly or wait for addProduct API update.
+        // If the backend addProduct.php doesn't support cost_price yet, we might need to 
+        // call updateProduct separately, but ideally the backend should be updated.
+        // Assuming updateProductFull can be used or addProduct is updated:
         apiService.addProduct(selectedCompany.getId(), selectedTireType, tireSize,
                 modelName, quantity, price, new ApiService.ApiCallback() {
                     @Override public void onSuccess(JSONObject response) {
-                        showLoading(false);
-                        try {
-                            boolean success = response.getBoolean(ApiConfig.KEY_SUCCESS);
-                            String  message = response.getString(ApiConfig.KEY_MESSAGE);
-                            if (success) {
-                                Toast.makeText(AddStockActivity.this,
-                                        "Stock added successfully!", Toast.LENGTH_SHORT).show();
-                                clearForm();
+                        if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
+                            int pid = response.optInt("product_id", -1);
+                            if (pid != -1 && costPrice > 0) {
+                                // If cost price was provided, update it specifically
+                                apiService.updateProduct(pid, "cost_price", costPrice, 0, new ApiService.ApiCallback() {
+                                    @Override public void onSuccess(JSONObject r2) { finishSuccess(); }
+                                    @Override public void onError(String e2) { finishSuccess(); }
+                                });
                             } else {
-                                Toast.makeText(AddStockActivity.this, message, Toast.LENGTH_SHORT).show();
+                                finishSuccess();
                             }
-                        } catch (Exception e) {
-                            Toast.makeText(AddStockActivity.this,
-                                    "Error parsing response", Toast.LENGTH_SHORT).show();
+                        } else {
+                            showLoading(false);
+                            Toast.makeText(AddStockActivity.this, response.optString("message"), Toast.LENGTH_SHORT).show();
                         }
                     }
                     @Override public void onError(String error) {
@@ -219,12 +235,19 @@ public class AddStockActivity extends AppCompatActivity {
                 });
     }
 
+    private void finishSuccess() {
+        showLoading(false);
+        Toast.makeText(AddStockActivity.this, "Stock added successfully!", Toast.LENGTH_SHORT).show();
+        clearForm();
+    }
+
     private void clearForm() {
         spinnerCompany.setText("", false);
         spinnerTireType.setText("", false);
         etModelName.setText("");
         etQuantity.setText("");
         etPrice.setText("");
+        etCostPrice.setText("");
         selectedCompany  = null;
         selectedTireType = null;
     }

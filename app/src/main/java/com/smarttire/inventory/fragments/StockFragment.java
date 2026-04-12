@@ -1,4 +1,3 @@
-// FILE: fragments/StockFragment.java  (OPTIMIZED — fixes ANR, RecyclerView lag, main thread blocking)
 package com.smarttire.inventory.fragments;
 
 import android.content.Intent;
@@ -19,7 +18,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -206,7 +204,11 @@ public class StockFragment extends Fragment {
         }
         layoutEmpty.setVisibility(View.GONE);
 
-        api.getProductsSorted("", 0, "", "name", new ApiService.ApiCallback() {
+        // Capture search text on main thread
+        final String currentSearch = (etSearch.getText() != null)
+                ? etSearch.getText().toString().toLowerCase().trim() : "";
+
+        api.getProductsSorted("", filterCompanyId, "", "name", new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject r) {
                 if (!isAdded()) return;
@@ -225,13 +227,7 @@ public class StockFragment extends Fragment {
                     }
 
                     // Apply initial filter off main thread
-                    String currentSearch = etSearch.getText() != null
-                            ? etSearch.getText().toString().toLowerCase().trim() : "";
                     List<Product> initialFiltered = filterProducts(newList, filterCompanyId, currentSearch);
-
-                    // DiffUtil for smart, minimal adapter updates
-                    DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                            new ProductDiffCallback(filteredList, initialFiltered));
 
                     mainHandler.post(() -> {
                         if (!isAdded()) return;
@@ -241,10 +237,11 @@ public class StockFragment extends Fragment {
                         productList.clear();
                         productList.addAll(newList);
 
+                        // Use adapter's updateData method to ensure its internal list is updated
+                        adapter.updateData(initialFiltered);
+
                         filteredList.clear();
                         filteredList.addAll(initialFiltered);
-
-                        diffResult.dispatchUpdatesTo(adapter);
                         layoutEmpty.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
                     });
                 });
@@ -263,22 +260,20 @@ public class StockFragment extends Fragment {
     }
 
     /**
-     * Runs filtering on a background thread, then dispatches DiffUtil results on main thread.
-     * This prevents jank when the product list is large.
+     * Runs filtering on a background thread, then updates the adapter on the main thread.
      */
     private void applyFilterAsync(String rawQuery) {
         final String query = rawQuery.toLowerCase().trim();
         executor.execute(() -> {
             List<Product> filtered = filterProducts(productList, filterCompanyId, query);
 
-            DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                    new ProductDiffCallback(filteredList, filtered));
-
             mainHandler.post(() -> {
                 if (!isAdded()) return;
+                // Update adapter with new filtered list
+                adapter.updateData(filtered);
+
                 filteredList.clear();
                 filteredList.addAll(filtered);
-                diffResult.dispatchUpdatesTo(adapter);
                 layoutEmpty.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
             });
         });
@@ -307,7 +302,6 @@ public class StockFragment extends Fragment {
             return;
         }
         Toast.makeText(requireContext(), "Generating PDF…", Toast.LENGTH_SHORT).show();
-        // Already background; no change needed here — keep consistent pattern
         executor.execute(() -> {
             StockPdfGenerator gen = new StockPdfGenerator(requireContext());
             File pdf = gen.generateAllStockPdf(new ArrayList<>(productList));
@@ -331,35 +325,5 @@ public class StockFragment extends Fragment {
         p.setPrice(o.getDouble("price"));
         p.setCostPrice(o.optDouble("cost_price", 0.0));
         return p;
-    }
-
-    // ── DiffUtil Callback ────────────────────────────────────────────────────
-
-    private static class ProductDiffCallback extends DiffUtil.Callback {
-        private final List<Product> oldList;
-        private final List<Product> newList;
-
-        ProductDiffCallback(List<Product> oldList, List<Product> newList) {
-            this.oldList = new ArrayList<>(oldList);
-            this.newList = newList;
-        }
-
-        @Override public int getOldListSize() { return oldList.size(); }
-        @Override public int getNewListSize() { return newList.size(); }
-
-        @Override
-        public boolean areItemsTheSame(int oldPos, int newPos) {
-            return oldList.get(oldPos).getId() == newList.get(newPos).getId();
-        }
-
-        @Override
-        public boolean areContentsTheSame(int oldPos, int newPos) {
-            Product o = oldList.get(oldPos);
-            Product n = newList.get(newPos);
-            return o.getQuantity() == n.getQuantity()
-                    && Double.compare(o.getPrice(), n.getPrice()) == 0
-                    && Double.compare(o.getCostPrice(), n.getCostPrice()) == 0
-                    && o.getModelName().equals(n.getModelName());
-        }
     }
 }

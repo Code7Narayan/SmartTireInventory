@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/activity_add_stock.xml  (UPDATED — tire size removed) -->
+<!-- FILE: res/layout/activity_add_stock.xml  (UPDATED — added Cost Price field) -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -87,36 +87,43 @@
                     android:inputType="textCapWords"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- NOTE: Tire Size field removed as requested -->
-            <!-- A hidden field with empty value to maintain backend compatibility -->
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etTireSize"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:visibility="gone"
-                android:text="-"/>
+            <!-- Quantity -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilQuantity"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Quantity"
+                app:startIconDrawable="@drawable/ic_stock">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etQuantity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Quantity & Price -->
+            <!-- Prices -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilQuantity"
+                    android:id="@+id/tilCostPrice"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="@dimen/margin_medium"
-                    android:hint="Quantity"
-                    app:startIconDrawable="@drawable/ic_stock">
+                    android:hint="Cost Price (₹)"
+                    app:startIconDrawable="@drawable/ic_money">
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etQuantity"
+                        android:id="@+id/etCostPrice"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"/>
+                        android:inputType="numberDecimal"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -127,7 +134,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="@dimen/margin_medium"
-                    android:hint="Unit Price (₹)"
+                    android:hint="Sell Price (₹)"
                     app:startIconDrawable="@drawable/ic_money">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPrice"

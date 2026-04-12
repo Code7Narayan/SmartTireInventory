@@ -36,6 +36,7 @@
                     app:startIconDrawable="@drawable/ic_company"
                     app:startIconTint="@color/info"
                     app:boxStrokeColor="@color/info"
+                    app:endIconMode="none"
                     app:hintTextColor="@color/info">
                     <AutoCompleteTextView
                         android:id="@+id/spinnerCustomer"
@@ -93,6 +94,7 @@
                 app:startIconDrawable="@drawable/ic_stock"
                 app:startIconTint="@color/info"
                 app:boxStrokeColor="@color/info"
+                app:endIconMode="none"
                 app:hintTextColor="@color/info">
                 <AutoCompleteTextView
                     android:id="@+id/spinnerProduct"
