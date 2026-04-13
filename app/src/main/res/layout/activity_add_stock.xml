@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/activity_add_stock.xml  (UPDATED — added Cost Price field) -->
+<!-- FILE: res/layout/activity_add_stock.xml (UPDATED) -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -40,7 +40,7 @@
             android:orientation="vertical"
             android:padding="@dimen/padding_medium">
 
-            <!-- Company Selection -->
+            <!-- Company Selection (Pre-filled MRF, Hidden if preferred, but keeping visible as read-only or default) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilCompany"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
@@ -51,22 +51,6 @@
                 app:startIconDrawable="@drawable/ic_company">
                 <AutoCompleteTextView
                     android:id="@+id/spinnerCompany"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Tire Type Selection -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilTireType"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/margin_medium"
-                android:hint="Tire Type"
-                app:startIconDrawable="@drawable/ic_tire">
-                <AutoCompleteTextView
-                    android:id="@+id/spinnerTireType"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"/>
@@ -103,47 +87,40 @@
                     android:inputType="number"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Prices -->
-            <LinearLayout
+            <!-- Cost Price -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilCostPrice"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilCostPrice"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Cost Price per unit (₹)"
+                app:startIconDrawable="@drawable/ic_money">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCostPrice"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginBottom="@dimen/margin_medium"
-                    android:hint="Cost Price (₹)"
-                    app:startIconDrawable="@drawable/ic_money">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCostPrice"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"/>
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:inputType="numberDecimal"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilPrice"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
+            <!-- Total Cost (Calculated) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTotalCost"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_medium"
+                android:hint="Total Cost (₹)"
+                app:startIconDrawable="@drawable/ic_money"
+                app:helperText="Automatically calculated">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTotalCost"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginBottom="@dimen/margin_medium"
-                    android:hint="Sell Price (₹)"
-                    app:startIconDrawable="@drawable/ic_money">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPrice"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-            </LinearLayout>
+                    android:focusable="false"
+                    android:clickable="false"
+                    android:inputType="none"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveStock"

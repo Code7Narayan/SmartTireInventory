@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
+import com.smarttire.inventory.utils.KeyboardUtils;
 import org.json.JSONObject;
 
 public class AddCompanyActivity extends AppCompatActivity {
@@ -78,6 +79,9 @@ public class AddCompanyActivity extends AppCompatActivity {
             etCompanyName.requestFocus();
             return;
         }
+
+        // Hide keyboard before starting operation
+        KeyboardUtils.hideKeyboard(this);
 
         // Show loading
         showLoading(true);

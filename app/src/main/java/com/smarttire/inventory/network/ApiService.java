@@ -1,16 +1,4 @@
 // FILE: network/ApiService.java
-// FIXES:
-//   1. getProductsSorted() — no longer forces company_id=1 when filter is "all companies".
-//      Previously: int finalCid = (cid == 0) ? 1 : cid; → always sent cid=1, filtering to Walk-in company.
-//      Now: only sends company_id if cid > 0, skips it otherwise.
-//   2. getMonthlySales() and getDailyAnalytics() — changed from post() to get() with query params,
-//      so they match the original PHP require_method('GET'). The PHP files have been updated to
-//      also accept POST (via the merged $input pattern), so either direction now works.
-//   3. getProducts() — kept as GET (correct).
-//   4. Added proper logging for all responses to ease future debugging.
-//   5. FIXED updateProduct() to use action='update' for price and cost_price, as the backend
-//      doesn't recognize 'cost_price' as a valid action name but handles the parameters under 'update'.
-
 package com.smarttire.inventory.network;
 
 import android.content.Context;
@@ -63,7 +51,7 @@ public class ApiService {
 
     // ── Products ──────────────────────────────────────────────────────────────
     public void addProduct(int companyId, String tireType, String tireSize,
-                           String modelName, int quantity, double price, ApiCallback cb) {
+                           String modelName, int quantity, double price, double costPrice, ApiCallback cb) {
         post(ApiConfig.ADD_PRODUCT, p -> {
             p.put("company_id", String.valueOf(companyId));
             p.put("tire_type",  tireType);
@@ -71,6 +59,7 @@ public class ApiService {
             p.put("model_name", modelName);
             p.put("quantity",   String.valueOf(quantity));
             p.put("price",      String.valueOf(price));
+            p.put("cost_price", String.valueOf(costPrice));
         }, cb);
     }
 
@@ -78,8 +67,6 @@ public class ApiService {
     public void getProducts(ApiCallback cb) { get(ApiConfig.GET_PRODUCTS, cb); }
 
     public void getProductsSorted(String m, int cid, String s, String sort, ApiCallback cb) {
-        // FIXED: Do NOT send company_id at all when cid == 0 (means "All Companies").
-        // The old code forced company_id=1 which accidentally filtered to a single company.
         post(ApiConfig.GET_PRODUCTS, p -> {
             if (m != null && !m.isEmpty())    p.put("model_name", m);
             if (cid > 0)                       p.put("company_id", String.valueOf(cid));
@@ -96,8 +83,6 @@ public class ApiService {
         post(ApiConfig.UPDATE_PRODUCT, p -> {
             p.put("product_id", String.valueOf(id));
             
-            // Map 'price' or 'cost_price' to 'update' action because the backend 
-            // uses a generic 'update' action for these fields.
             String serverAction = action;
             if ("price".equals(action) || "cost_price".equals(action)) {
                 serverAction = "update";
@@ -105,7 +90,6 @@ public class ApiService {
             p.put("action", serverAction);
 
             if (price != -1) {
-                // FIXED: Use cost_price key when action is cost_price
                 String key = "cost_price".equals(action) ? "cost_price" : "price";
                 p.put(key, String.valueOf(price));
             }
@@ -169,12 +153,13 @@ public class ApiService {
     }
 
     // ── Sales ─────────────────────────────────────────────────────────────────
-    public void sellProduct(int pid, int cid, int q, double paid, String mode,
+    public void sellProduct(int pid, int cid, int q, double price, double paid, String mode,
                             String gst, ApiCallback cb) {
         post(ApiConfig.SELL_PRODUCT, p -> {
             p.put("product_id",   String.valueOf(pid));
             p.put("customer_id",  String.valueOf(cid));
             p.put("quantity",     String.valueOf(q));
+            p.put("price",        String.valueOf(price));
             p.put("paid_amount",  String.valueOf(paid));
             p.put("payment_mode", mode);
             p.put("gst_number",   gst);
@@ -203,19 +188,25 @@ public class ApiService {
         }, cb);
     }
 
+    public void addCustomerPayment(int customerId, double amount, String mode, String note, ApiCallback cb) {
+        post(ApiConfig.ADD_PAYMENT, p -> {
+            p.put("customer_id",  String.valueOf(customerId));
+            p.put("amount_paid",  String.valueOf(amount));
+            p.put("payment_mode", mode);
+            p.put("note",         note != null ? note : "");
+            p.put("sale_id",      "0");
+        }, cb);
+    }
+
     // ── Dashboard ─────────────────────────────────────────────────────────────
     public void getDashboard(ApiCallback cb)          { get(ApiConfig.GET_DASHBOARD, cb); }
     public void getLowStock(ApiCallback cb)           { get(ApiConfig.LOW_STOCK, cb); }
     public void getDashboardAnalytics(ApiCallback cb) { get(ApiConfig.GET_DASHBOARD_DATA, cb); }
 
-    // FIXED: getMonthlySales — use GET with query param (PHP uses require_method('GET')).
-    // The updated PHP also accepts POST body as fallback.
     public void getMonthlySales(int months, ApiCallback cb) {
         get(ApiConfig.GET_MONTHLY_SALES + "?months=" + months, cb);
     }
 
-    // FIXED: getDailyAnalytics — use GET with query param (PHP uses require_method('GET')).
-    // The updated PHP also accepts POST body as fallback.
     public void getDailyAnalytics(String date, ApiCallback cb) {
         String safeDate = (date != null && !date.isEmpty()) ? date : "";
         get(ApiConfig.GET_DAILY_ANALYTICS + "?date=" + safeDate, cb);

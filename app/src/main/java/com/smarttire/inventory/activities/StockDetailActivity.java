@@ -1,4 +1,4 @@
-// FILE: activities/StockDetailActivity.java (FIXED — API Structure Update)
+// FILE: activities/StockDetailActivity.java (UPDATED - Simplified UI)
 package com.smarttire.inventory.activities;
 
 import android.app.AlertDialog;
@@ -44,8 +44,8 @@ public class StockDetailActivity extends AppCompatActivity {
     public static final String EXTRA_PRODUCT_ID   = "product_id";
     public static final String EXTRA_PRODUCT_NAME = "product_name";
 
-    private TextView        tvCompany, tvModel, tvTireType, tvTireSize, tvPrice;
-    private TextView        tvTotalAdded, tvTotalSold, tvCurrentStock, tvAddedDate;
+    private TextView        tvCompany, tvModel, tvAddedDate;
+    private TextView        tvTotalAdded, tvTotalSold, tvCurrentStock;
     private MaterialButton  btnSell, btnExportPdf, btnDelete;
     private ImageButton     btnEdit;
     private RecyclerView    rvTransactions;
@@ -74,9 +74,6 @@ public class StockDetailActivity extends AppCompatActivity {
 
         tvCompany      = findViewById(R.id.tvDetailCompany);
         tvModel        = findViewById(R.id.tvDetailModel);
-        tvTireType     = findViewById(R.id.tvDetailTireType);
-        tvTireSize     = findViewById(R.id.tvDetailTireSize);
-        tvPrice        = findViewById(R.id.tvDetailPrice);
         tvTotalAdded   = findViewById(R.id.tvDetailTotalAdded);
         tvTotalSold    = findViewById(R.id.tvDetailTotalSold);
         tvCurrentStock = findViewById(R.id.tvDetailCurrentStock);
@@ -110,11 +107,11 @@ public class StockDetailActivity extends AppCompatActivity {
                 try {
                     if (!response.optBoolean("success")) return;
 
-                    JSONObject data = response.optJSONObject("data"); // ✅ FIX
+                    JSONObject data = response.optJSONObject("data");
                     if (data == null) return;
 
                     productData = data;
-                    bindUI(data); // ✅ pass data directly
+                    bindUI(data);
                     layoutContent.setVisibility(View.VISIBLE);
 
                 } catch (Exception e) {
@@ -130,21 +127,13 @@ public class StockDetailActivity extends AppCompatActivity {
     }
 
     private void bindUI(JSONObject data) {
-        // FIXED: Using 'data' directly instead of 'response.getJSONObject("product")'
-        // Using opt methods to avoid crashes if fields are missing
         int totalAdded      = data.optInt("total_added", 0);
         int totalSold       = data.optInt("total_sold", 0);
-        // FIXED: Using 'quantity' instead of 'current_stock' if needed, with fallback
         int currentStock    = data.optInt("quantity", data.optInt("current_stock", 0));
         JSONArray txList    = data.optJSONArray("transactions");
 
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
-
         tvCompany.setText(data.optString("company_name", "—"));
         tvModel.setText(data.optString("model_name", "—"));
-        tvTireType.setText(data.optString("tire_type", "—"));
-        tvTireSize.setText(data.optString("tire_size", "—"));
-        tvPrice.setText(fmt.format(data.optDouble("price", 0)));
         tvTotalAdded.setText(String.valueOf(totalAdded));
         tvTotalSold.setText(String.valueOf(totalSold));
         tvCurrentStock.setText(String.valueOf(currentStock));
@@ -174,7 +163,8 @@ public class StockDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtra("open_sell", true);
             intent.putExtra("preselect_product_id", productId);
-            intent.putExtra("preselect_product_name", data.optString("company_name") + " | " + data.optString("model_name") + " " + data.optString("tire_type") + " (" + data.optString("tire_size") + ")");
+            // Simplified summary for selection
+            intent.putExtra("preselect_product_name", data.optString("company_name") + " | " + data.optString("model_name"));
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         });
@@ -185,36 +175,31 @@ public class StockDetailActivity extends AppCompatActivity {
     private void showEditDialog() {
         if (productData == null) return;
         try {
-            // FIXED: Using productData directly (it's the 'data' from API response)
             JSONObject p = productData;
             AlertDialog.Builder b = new AlertDialog.Builder(this);
             View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_stock, null);
             b.setView(v);
 
             AutoCompleteTextView spinCompany = v.findViewById(R.id.editStockCompany);
-            AutoCompleteTextView spinType    = v.findViewById(R.id.editStockType);
             TextInputEditText etModel        = v.findViewById(R.id.editStockModel);
-            TextInputEditText etSize         = v.findViewById(R.id.editStockSize);
-            TextInputEditText etPrice        = v.findViewById(R.id.editStockPrice);
-            TextInputEditText etCostPrice   = v.findViewById(R.id.editStockCostPrice);
 
             // Setup spinners
             ArrayAdapter<Company> cAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, companyList);
             spinCompany.setAdapter(cAdapter);
-            String[] types = getResources().getStringArray(R.array.tire_types);
-            spinType.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, types));
 
             // Set current values
             spinCompany.setText(p.optString("company_name"), false);
-            spinType.setText(p.optString("tire_type"), false);
             etModel.setText(p.optString("model_name"));
-            etSize.setText(p.optString("tire_size"));
-            etPrice.setText(String.valueOf(p.optDouble("price", 0)));
-            etCostPrice.setText(String.valueOf(p.optDouble("cost_price", 0)));
 
             b.setTitle("Edit Product Details");
             b.setPositiveButton("Update", (dialog, which) -> {
-                performUpdate(spinCompany.getText().toString(), spinType.getText().toString(), etModel.getText().toString(), etSize.getText().toString(), etPrice.getText().toString(), etCostPrice.getText().toString());
+                // Keep original values for fields removed from UI
+                String type = p.optString("tire_type");
+                String size = p.optString("tire_size");
+                double price = p.optDouble("price", 0);
+                double cost = p.optDouble("cost_price", 0);
+                
+                performUpdate(spinCompany.getText().toString(), type, etModel.getText().toString(), size, String.valueOf(price), String.valueOf(cost));
             });
             b.setNegativeButton("Cancel", null);
             b.show();
@@ -230,7 +215,6 @@ public class StockDetailActivity extends AppCompatActivity {
         api.updateProductFull(productId, cid, type, size, model, Double.parseDouble(price), Double.parseDouble(cost), new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
-                Log.d("API_RESPONSE", response.toString());
                 progressBar.setVisibility(View.GONE);
                 if (response.optBoolean("success")) {
                     Toast.makeText(StockDetailActivity.this, "Product updated", Toast.LENGTH_SHORT).show();
@@ -288,6 +272,8 @@ public class StockDetailActivity extends AppCompatActivity {
     private void exportPdf(JSONObject product, int totalAdded, int totalSold, int currentStock, List<String[]> txRows) {
         try {
             StockPdfGenerator gen = new StockPdfGenerator(this);
+            // We pass original values for PDF if needed, or update PDF generator as well. 
+            // For now, keeping the call signature as is but passing existing data.
             java.io.File pdf = gen.generateStockDetailPdf(product.optString("company_name"), product.optString("model_name"), product.optString("tire_type"), product.optString("tire_size"), product.optDouble("price", 0), totalAdded, totalSold, currentStock, txRows);
             if (pdf != null) gen.openPdf(pdf);
         } catch (Exception e) { Toast.makeText(this, "PDF error: " + e.getMessage(), Toast.LENGTH_SHORT).show(); }

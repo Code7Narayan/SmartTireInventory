@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: AndroidManifest.xml  (UPDATED — StockDetailActivity added) -->
+<!-- FILE: AndroidManifest.xml (STABILITY UPDATE) -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ── Permissions ────────────────────────────────────────────────────── -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission
@@ -26,7 +25,6 @@
         android:theme="@style/Theme.SmartTireInventory"
         tools:targetApi="31">
 
-        <!-- ── Customer Management ──────────────────────────────────────── -->
         <activity
             android:name=".activities.CustomerActivity"
             android:exported="false"
@@ -51,14 +49,12 @@
             android:label="Record Payment"
             android:parentActivityName=".activities.CustomerDetailActivity" />
 
-        <!-- ── Stock Detail ──────────────────────────────────────────────── -->
         <activity
             android:name=".activities.StockDetailActivity"
             android:exported="false"
             android:label="Stock Detail"
             android:parentActivityName=".activities.MainActivity" />
 
-        <!-- ── Login Activity – launcher ────────────────────────────────── -->
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
@@ -69,27 +65,24 @@
             </intent-filter>
         </activity>
 
-        <!-- ── Main Activity ─────────────────────────────────────────────── -->
+        <!-- Changed to adjustPan for better keyboard stability on Realme/Oppo -->
         <activity
             android:name=".activities.MainActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustPan" />
 
-        <!-- ── Add Company ───────────────────────────────────────────────── -->
         <activity
             android:name=".activities.AddCompanyActivity"
             android:exported="false"
             android:label="Add Company"
             android:parentActivityName=".activities.MainActivity" />
 
-        <!-- ── Add Stock ──────────────────────────────────────────────────  -->
         <activity
             android:name=".activities.AddStockActivity"
             android:exported="false"
             android:label="Add Stock"
             android:parentActivityName=".activities.MainActivity" />
 
-        <!-- ── FileProvider for PDF sharing ─────────────────────────────── -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/fragment_sell.xml (MODERN CART & CHECKOUT UI — Professional Tones) -->
+<!-- FILE: res/layout/fragment_sell.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,55 +8,139 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Header: Customer Selection (Blue Tone for Trust/Identity) -->
-    <androidx.cardview.widget.CardView
+    <!-- ═══════════════════════════════════════════════════
+         TOP HEADER BAR
+    ═══════════════════════════════════════════════════ -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
+        android:orientation="horizontal"
+        android:background="@color/primary"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:elevation="4dp">
+
+        <TextView
+            android:id="@+id/tvCartBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/badge_circle_bg"
+            android:text="0"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="7dp"
+            android:paddingVertical="2dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════
+         TOP INPUT SECTION (Compact)
+    ═══════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:elevation="2dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- ── Row 1: Customer Search ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <!-- Customer Label Pill -->
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:text="CUST"
+                android:textColor="@color/info"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/chip_info_bg"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:layout_marginEnd="6dp"/>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Search Customer"
+                app:startIconDrawable="@drawable/ic_company"
+                app:startIconTint="@color/info"
+                app:boxStrokeColor="@color/info"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp"
+                app:endIconMode="none"
+                app:hintTextColor="@color/info"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp">
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerCustomer"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Search Customer"
-                    app:startIconDrawable="@drawable/ic_company"
-                    app:startIconTint="@color/info"
-                    app:boxStrokeColor="@color/info"
-                    app:endIconMode="none"
-                    app:hintTextColor="@color/info">
-                    <AutoCompleteTextView
-                        android:id="@+id/spinnerCustomer"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:padding="12dp"/>
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:inputType="text"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAddNewCustomer"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NEW"
-                    android:textColor="@color/info"
-                    android:textStyle="bold"
-                    app:icon="@drawable/ic_add"
-                    app:iconTint="@color/info" />
-            </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddNewCustomer"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:text="NEW"
+                android:textColor="@color/info"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                app:icon="@drawable/ic_add"
+                app:iconTint="@color/info"
+                app:iconSize="14dp"
+                app:iconPadding="3dp"
+                app:strokeColor="@color/info"
+                app:cornerRadius="8dp"/>
+        </LinearLayout>
+
+        <!-- Outstanding Due (compact, inline) -->
+        <LinearLayout
+            android:id="@+id/layoutDueBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp"
+            android:layout_marginStart="42dp"
+            android:background="@drawable/chip_error_bg"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:src="@drawable/ic_warning"
+                app:tint="@color/error"
+                android:layout_marginEnd="4dp"/>
 
             <TextView
                 android:id="@+id/tvCustomerDue"
@@ -64,189 +148,363 @@
                 android:layout_height="wrap_content"
                 android:text="Outstanding: ₹0"
                 android:textColor="@color/error"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"
+                android:textSize="10sp"
+                android:textStyle="bold"
                 android:visibility="gone"/>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-    <!-- Product Quick Add (Teal/Info Tone for Inventory/Selection) -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:layout_marginHorizontal="12dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
+        <!-- ── Row 2: Product Search ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="12dp"
             android:gravity="center_vertical">
+
+            <!-- Product Label Pill -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TIRE"
+                android:textColor="@color/success"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/chip_success_bg"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:layout_marginEnd="6dp"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Add Product to Cart"
+                android:hint="Search Tire / Product"
                 app:startIconDrawable="@drawable/ic_stock"
-                app:startIconTint="@color/info"
-                app:boxStrokeColor="@color/info"
+                app:startIconTint="@color/success"
+                app:boxStrokeColor="@color/success"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp"
                 app:endIconMode="none"
-                app:hintTextColor="@color/info">
+                app:hintTextColor="@color/success"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp">
                 <AutoCompleteTextView
                     android:id="@+id/spinnerProduct"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"/>
+                    android:inputType="text"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAddProduct"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
                 android:text="ADD"
-                android:textColor="@color/success"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
                 android:textStyle="bold"
+                android:paddingHorizontal="8dp"
                 app:icon="@drawable/ic_add"
-                app:iconTint="@color/success" />
+                app:iconTint="@android:color/white"
+                app:iconSize="14dp"
+                app:iconPadding="3dp"
+                app:backgroundTint="@color/success"
+                app:cornerRadius="8dp"/>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-    <!-- Cart List -->
-    <TextView
-        android:layout_width="wrap_content"
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════
+         ORDER SUMMARY HEADER
+    ═══════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Order Summary"
-        android:textColor="@color/text_primary"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="6dp">
 
+        <View
+            android:layout_width="3dp"
+            android:layout_height="14dp"
+            android:background="@color/primary"
+            android:layout_marginEnd="7dp"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ORDER SUMMARY"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"/>
+
+        <TextView
+            android:id="@+id/tvItemCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 items"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"/>
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════
+         CART RECYCLERVIEW  ← takes ALL remaining space
+    ═══════════════════════════════════════════════════ -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCart"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingHorizontal="12dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="6dp"
         android:clipToPadding="false"/>
 
-    <!-- Checkout Section (Success Green Tone for Revenue/Action) -->
+    <!-- ═══════════════════════════════════════════════════
+         CHECKOUT PANEL (Fixed Bottom — Compact)
+    ═══════════════════════════════════════════════════ -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardElevation="8dp"
-        app:cardCornerRadius="0dp">
+        app:cardElevation="16dp"
+        app:cardCornerRadius="0dp"
+        app:cardBackgroundColor="@color/surface">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:background="@color/surface">
+            android:orientation="vertical">
+
+            <!-- Top accent line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:background="@color/primary"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Grand Total"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
-                <TextView
-                    android:id="@+id/tvTotalPrice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="₹0.00"
-                    android:textColor="@color/success"
-                    android:textSize="22sp"
-                    android:textStyle="bold"/>
-            </LinearLayout>
+                android:orientation="vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="30dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:hint="Amount Paid"
-                    app:prefixText="₹"
-                    app:boxStrokeColor="@color/success"
-                    app:hintTextColor="@color/success">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPaidAmount"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"
-                        android:textColor="@color/success"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Remaining"
-                    app:prefixText="₹"
-                    app:boxStrokeColor="@color/warning"
-                    app:hintTextColor="@color/warning">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etRemainingAmount"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"
-                        android:text="0"
-                        android:textColor="@color/warning"/>
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Payment Mode"
-                app:boxStrokeColor="@color/info"
-                app:hintTextColor="@color/info"
-                app:startIconDrawable="@drawable/ic_money"
-                app:startIconTint="@color/info">
-                <AutoCompleteTextView
-                    android:id="@+id/spinnerPaymentMode"
+                <!-- Grand Total + Balance Row -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPlaceOrder"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Place Order"
-                android:textAllCaps="false"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:cornerRadius="12dp"
-                app:backgroundTint="@color/success"
-                app:icon="@drawable/ic_sell"
-                app:iconGravity="textStart"
-                app:iconSize="20dp"
-                app:elevation="4dp"/>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="GRAND TOTAL"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.1"/>
+
+                        <TextView
+                            android:id="@+id/tvTotalPrice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="₹0.00"
+                            android:textColor="@color/success"
+                            android:textSize="22sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="32dp"
+                        android:background="@color/divider"
+                        android:layout_marginHorizontal="10dp"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="end">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BALANCE DUE"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.1"/>
+
+                        <TextView
+                            android:id="@+id/tvBalanceDue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="₹0.00"
+                            android:textColor="@color/warning"
+                            android:textSize="16sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    android:layout_marginBottom="10dp"/>
+
+                <!-- Amount Paid + Remaining -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:hint="Amount Paid"
+                        app:prefixText="₹ "
+                        app:prefixTextColor="@color/success"
+                        app:boxStrokeColor="@color/success"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/success"
+                        app:startIconDrawable="@drawable/ic_money"
+                        app:startIconTint="@color/success"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusBottomEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPaidAmount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="10dp"
+                            android:paddingBottom="10dp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="5dp"
+                        android:hint="Remaining"
+                        app:prefixText="₹ "
+                        app:prefixTextColor="@color/warning"
+                        app:boxStrokeColor="@color/warning"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/warning"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusBottomEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etRemainingAmount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:text="0"
+                            android:textColor="@color/warning"
+                            android:textSize="13sp"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="10dp"
+                            android:paddingBottom="10dp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <!-- Payment Mode + Place Order (side by side) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:hint="Payment Mode"
+                        app:boxStrokeColor="@color/info"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/info"
+                        app:startIconDrawable="@drawable/ic_money"
+                        app:startIconTint="@color/info"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusBottomEnd="8dp">
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerPaymentMode"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="10dp"
+                            android:paddingBottom="10dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPlaceOrder"
+                        android:layout_width="wrap_content"
+                        android:layout_height="50dp"
+                        android:text="Place Order"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:paddingHorizontal="16dp"
+                        app:cornerRadius="10dp"
+                        app:backgroundTint="@color/success"
+                        app:icon="@drawable/ic_sell"
+                        app:iconGravity="textStart"
+                        app:iconSize="18dp"
+                        app:iconTint="@android:color/white"
+                        app:iconPadding="4dp"
+                        app:elevation="3dp"
+                        app:rippleColor="#33FFFFFF"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

@@ -5,38 +5,14 @@
     <group android:checkableBehavior="single">
 
         <item
-            android:id="@+id/drawer_dashboard"
-            android:icon="@drawable/ic_dashboard"
-            android:title="Dashboard"/>
-
-        <item
-            android:id="@+id/drawer_stock"
-            android:icon="@drawable/ic_stock"
-            android:title="Stock"/>
-
-        <item
-            android:id="@+id/drawer_sell"
-            android:icon="@drawable/ic_sell"
-            android:title="Sell Product"/>
-
-        <item
             android:id="@+id/drawer_customers"
-            android:icon="@drawable/ic_company"
+            android:icon="@drawable/ic_person"
             android:title="Customers"/>
-
-        <item
-            android:id="@+id/drawer_sales_history"
-            android:icon="@drawable/ic_report"
-            android:title="Sales History"/>
 
     </group>
 
     <item android:title="Management">
         <menu>
-            <item
-                android:id="@+id/drawer_add_company"
-                android:icon="@drawable/ic_company"
-                android:title="Add Company"/>
             <item
                 android:id="@+id/drawer_add_stock"
                 android:icon="@drawable/ic_add"

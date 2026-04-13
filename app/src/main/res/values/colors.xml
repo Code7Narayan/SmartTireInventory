@@ -3,10 +3,10 @@
 <!-- Light Theme Colors -->
 <resources>
     <!-- Primary Colors -->
-    <color name="primary">#D32F2F</color>
-    <color name="primary_dark">#B71C1C</color>
-    <color name="primary_light">#FFCDD2</color>
-    <color name="accent">#E53935</color>
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="accent">#1E88E5</color>
 
     <!-- Background Colors -->
     <color name="background">#FFFFFF</color>

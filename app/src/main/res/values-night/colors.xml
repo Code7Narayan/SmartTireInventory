@@ -2,10 +2,10 @@
 <!-- Dark Theme Colors -->
 <resources>
     <!-- Primary Colors -->
-    <color name="primary">#E53935</color>
-    <color name="primary_dark">#C62828</color>
-    <color name="primary_light">#EF5350</color>
-    <color name="accent">#FF5252</color>
+    <color name="primary">#1E88E5</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#42A5F5</color>
+    <color name="accent">#448AFF</color>
 
     <!-- Background Colors -->
     <color name="background">#121212</color>

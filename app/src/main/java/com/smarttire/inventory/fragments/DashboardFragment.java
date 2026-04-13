@@ -1,4 +1,3 @@
-// FILE: fragments/DashboardFragment.java (FINAL FIX — addressing checklist)
 package com.smarttire.inventory.fragments;
 
 import android.content.Intent;
@@ -180,13 +179,14 @@ public class DashboardFragment extends Fragment {
     }
 
     private void setupChart() {
-        if (barChartMonthly == null) return;
-        barChartMonthly.getDescription().setEnabled(false);
-        barChartMonthly.getAxisRight().setEnabled(false);
-        XAxis xAxis = barChartMonthly.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
-        xAxis.setGranularity(1f);
+        if (barChartMonthly != null) {
+            barChartMonthly.getDescription().setEnabled(false);
+            barChartMonthly.getAxisRight().setEnabled(false);
+            XAxis xAxis = barChartMonthly.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setDrawGridLines(false);
+            xAxis.setGranularity(1f);
+        }
     }
 
     private void loadAll() {
@@ -215,16 +215,13 @@ public class DashboardFragment extends Fragment {
                         JSONObject data = response.optJSONObject("data");
                         if (data == null) return;
 
-                        // ✅ Set TextViews properly
                         tvTotalStock.setText(String.valueOf(data.optInt("total_stock", 0)));
                         tvTotalCustomers.setText(String.valueOf(data.optInt("total_customers", 0)));
                         tvTotalOutstanding.setText(INR_FMT.format(data.optDouble("total_outstanding", 0)));
 
-                        // Debtors
                         JSONArray debtors = data.optJSONArray("top_debtors");
                         if (debtors != null) bindDebtorsAsync(debtors);
 
-                        // Most Sold
                         JSONArray mostSold = data.optJSONArray("most_sold");
                         if (mostSold != null) bindMostSoldAsync(mostSold);
                     }
@@ -275,7 +272,6 @@ public class DashboardFragment extends Fragment {
                     } catch (Exception e) { Log.e(TAG, "Low stock parse", e); }
                     mainHandler.post(() -> {
                         if (!isAdded()) return;
-                        // ✅ Clear & Notify via adapter method
                         lowStockAdapter.updateData(parsed);
                         if (tvNoLowStock != null) tvNoLowStock.setVisibility(parsed.isEmpty() ? View.VISIBLE : View.GONE);
                     });
@@ -286,15 +282,18 @@ public class DashboardFragment extends Fragment {
     }
 
     private void loadMonthlyAnalytics() {
-        api.getMonthlySales(6, new ApiService.ApiCallback() {
+        // Updated to show past 2 months data as requested
+        api.getMonthlySales(2, new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
-                if (!isAdded() || barChartMonthly == null) return;
+                if (!isAdded()) return;
                 onLoadComplete();
                 try {
                     if (response.optBoolean(ApiConfig.KEY_SUCCESS)) {
                         JSONArray data = response.optJSONArray(ApiConfig.KEY_DATA);
-                        if (data != null) bindBarChartData(data);
+                        if (data != null && barChartMonthly != null) {
+                            bindBarChartData(data);
+                        }
                     }
                 } catch (Exception e) { Log.e(TAG, "Monthly parse", e); }
             }
@@ -333,7 +332,6 @@ public class DashboardFragment extends Fragment {
             } catch (Exception e) { Log.e(TAG, "Debtor parse", e); }
             mainHandler.post(() -> {
                 if (!isAdded()) return;
-                // ✅ Clear & Notify via adapter method
                 debtorAdapter.updateData(list);
             });
         });
@@ -347,7 +345,6 @@ public class DashboardFragment extends Fragment {
             } catch (Exception e) { Log.e(TAG, "MostSold parse", e); }
             mainHandler.post(() -> {
                 if (!isAdded()) return;
-                // ✅ Clear & Notify via adapter method
                 mostSoldAdapter.updateData(parsed);
             });
         });
@@ -503,9 +500,9 @@ public class DashboardFragment extends Fragment {
         private final List<DebtorItem> list = new ArrayList<>();
         TopDebtorAdapter(android.content.Context c, List<DebtorItem> initial) { ctx = c; list.addAll(initial); }
         void updateData(List<DebtorItem> newData) {
-            list.clear(); // ✅ Clear before adding
+            list.clear();
             list.addAll(newData);
-            notifyDataSetChanged(); // ✅ Notify adapter
+            notifyDataSetChanged();
         }
         @NonNull @Override public VH onCreateViewHolder(@NonNull ViewGroup parent, int type) {
             return new VH(LayoutInflater.from(ctx).inflate(R.layout.item_debtor, parent, false));

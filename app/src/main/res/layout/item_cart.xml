@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/item_cart.xml (Professional Tones) -->
+<!-- FILE: res/layout/item_cart.xml (REALME/COLOROS STABILITY FIX) -->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -37,40 +37,36 @@
                     android:textStyle="bold" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="4dp">
+                    android:layout_marginTop="8dp">
 
                     <TextView
-                        android:id="@+id/tvCostPrice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cost: ₹0"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:text="Cost: ₹"
+                        android:textColor="@color/error"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvSellPrice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sell: ₹0"
-                        android:textColor="@color/success"
+                    <!-- Using a standard EditText with fixed height and no autofill for stability -->
+                    <EditText
+                        android:id="@+id/etItemCostPrice"
+                        android:layout_width="120dp"
+                        android:layout_height="44dp"
+                        android:inputType="numberDecimal"
+                        android:background="@android:drawable/editbox_background_normal"
+                        android:paddingHorizontal="8dp"
+                        android:textColor="@color/error"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:layout_marginStart="12dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnEditPrice"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_edit"
-                        app:tint="@color/info"
-                        android:padding="4dp"
-                        android:scaleType="fitCenter"/>
+                        android:maxLines="1"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:saveEnabled="false"
+                        android:selectAllOnFocus="true"/>
                 </LinearLayout>
             </LinearLayout>
 

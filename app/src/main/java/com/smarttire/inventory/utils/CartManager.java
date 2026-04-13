@@ -2,13 +2,14 @@ package com.smarttire.inventory.utils;
 
 import com.smarttire.inventory.models.Product;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CartManager {
     private static CartManager instance;
-    private final Map<Integer, Product> cartItems = new HashMap<>();
+    // Using LinkedHashMap to maintain insertion order for a consistent UI
+    private final Map<Integer, Product> cartItems = new LinkedHashMap<>();
 
     private CartManager() {}
 
@@ -50,6 +51,7 @@ public class CartManager {
     public double getTotal() {
         double total = 0;
         for (Product p : cartItems.values()) {
+            // Calculate total based on the current price (which might be edited in the cart)
             total += p.getPrice() * p.getCartQuantity();
         }
         return total;

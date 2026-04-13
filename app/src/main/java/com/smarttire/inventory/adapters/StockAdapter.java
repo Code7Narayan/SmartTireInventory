@@ -1,5 +1,4 @@
-// FILE: adapters/StockAdapter.java  (OPTIMIZED — no server calls on main thread during bind,
-//   DiffUtil support, stable IDs, efficient ViewHolder)
+// FILE: adapters/StockAdapter.java  (UPDATED to include direct stock addition)
 package com.smarttire.inventory.adapters;
 
 import android.app.AlertDialog;
@@ -37,7 +36,6 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
     public interface OnStockChangedListener { void onStockChanged(); }
 
     private final Context       ctx;
-    // Adapter owns its own internal list — never hold a reference to the Fragment's list directly
     private final List<Product> items = new ArrayList<>();
 
     private OnItemClickListener    clickListener;
@@ -49,7 +47,6 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
     public StockAdapter(Context ctx, List<Product> initialData) {
         this.ctx = ctx;
         this.items.addAll(initialData);
-        // Stable IDs allow RecyclerView to animate changes correctly
         setHasStableIds(true);
     }
 
@@ -70,29 +67,18 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
 
     @Override
     public void onBindViewHolder(@NonNull StockViewHolder h, int position) {
-        // Use getAdapterPosition() inside click listeners — never capture `position` directly
         Product product = items.get(position);
         bindProduct(h, product);
     }
 
-    /**
-     * Called by RecyclerView for partial updates. Handles the "quantity changed" payload
-     * so only the quantity TextView is redrawn — not the entire row.
-     */
     @Override
     public void onBindViewHolder(@NonNull StockViewHolder h, int position,
                                  @NonNull List<Object> payloads) {
         if (!payloads.isEmpty() && payloads.get(0) instanceof String) {
             String type = (String) payloads.get(0);
             Product product = items.get(position);
-            if ("QTY".equals(type)) {
-                updateQuantityViews(h, product);
-                return;
-            }
-            if ("PRICE".equals(type)) {
-                h.tvPrice.setText(INR_FMT.format(product.getPrice()));
-                if (h.tvCostPrice != null)
-                    h.tvCostPrice.setText("Cost: " + INR_FMT.format(product.getCostPrice()));
+            if ("QTY".equals(type) || "PRICE".equals(type)) {
+                updatePriceAndQuantityViews(h, product);
                 return;
             }
         }
@@ -100,30 +86,22 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
     }
 
     private void bindProduct(@NonNull StockViewHolder h, Product product) {
-        // Header
         String displayModel = product.getModelName().isEmpty()
                 ? product.getTireType() : product.getModelName();
         h.tvModelName.setText(displayModel);
         h.tvCompanyName.setText(product.getCompanyName() + " | " + product.getTireSize());
 
-        // Price & Stock
-        h.tvPrice.setText(INR_FMT.format(product.getPrice()));
-        if (h.tvCostPrice != null) {
-            h.tvCostPrice.setText("Cost: " + INR_FMT.format(product.getCostPrice()));
-        }
-        updateQuantityViews(h, product);
+        updatePriceAndQuantityViews(h, product);
 
-        // ── Plus Button ──────────────────────────────────────────────────────
         h.btnPlus.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_ID) return;
+            if (pos == RecyclerView.NO_POSITION) return;
             updateQuantityOnServer(items.get(pos), 1, h, pos);
         });
 
-        // ── Minus Button ─────────────────────────────────────────────────────
         h.btnMinus.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_ID) return;
+            if (pos == RecyclerView.NO_POSITION) return;
             Product p = items.get(pos);
             if (p.getQuantity() > 0) {
                 updateQuantityOnServer(p, -1, h, pos);
@@ -132,10 +110,15 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
             }
         });
 
-        // ── Cart Button ───────────────────────────────────────────────────────
+        h.btnEditQty.setOnClickListener(v -> {
+            int pos = h.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            showAddStockDialog(items.get(pos), h, pos);
+        });
+
         h.btnAddToCart.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_ID) return;
+            if (pos == RecyclerView.NO_POSITION) return;
             Product p = items.get(pos);
             if (p.getQuantity() <= 0) {
                 Toast.makeText(ctx, "Out of stock", Toast.LENGTH_SHORT).show();
@@ -146,26 +129,34 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
             if (changeListener != null) changeListener.onStockChanged();
         });
 
-        // ── Edit Cost Price ───────────────────────────────────────────────────
         if (h.btnEditCostPrice != null) {
             h.btnEditCostPrice.setOnClickListener(v -> {
                 int pos = h.getAdapterPosition();
-                if (pos == RecyclerView.NO_ID) return;
+                if (pos == RecyclerView.NO_POSITION) return;
                 showEditDialog(items.get(pos), "cost_price", "Edit Cost Price", pos);
             });
         }
 
-        // ── Card Click → Detail ───────────────────────────────────────────────
         h.itemView.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_ID) return;
+            if (pos == RecyclerView.NO_POSITION) return;
             if (clickListener != null) clickListener.onItemClick(items.get(pos));
         });
     }
 
-    private void updateQuantityViews(@NonNull StockViewHolder h, Product product) {
+    private void updatePriceAndQuantityViews(@NonNull StockViewHolder h, Product product) {
+        // Show Total Stock Value (Qty * Cost Price) instead of selling price
+        double totalValue = product.getQuantity() * product.getCostPrice();
+        h.tvPrice.setText("Total: " + INR_FMT.format(totalValue));
+        
+        // Show Unit Cost Price
+        if (h.tvCostPrice != null) {
+            h.tvCostPrice.setText("Unit: " + INR_FMT.format(product.getCostPrice()));
+        }
+
         h.tvQuantity.setText("Stock: " + product.getQuantity());
         h.tvCurrentQty.setText(String.valueOf(product.getQuantity()));
+        
         int stockColor = product.isLowStock() ? R.color.error : R.color.text_hint;
         h.tvQuantity.setTextColor(ContextCompat.getColor(ctx, stockColor));
         if (h.ivLowStock != null) {
@@ -173,15 +164,10 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         }
     }
 
-    /**
-     * Sends +/- request to server WITHOUT blocking the UI.
-     * Optimistically updates the local model before server responds.
-     */
     private void updateQuantityOnServer(Product product, int delta,
                                         @NonNull StockViewHolder h, int pos) {
-        // Optimistic UI update immediately (no lag)
         product.setQuantity(product.getQuantity() + delta);
-        notifyItemChanged(pos, "QTY");
+        updatePriceAndQuantityViews(h, product);
 
         ApiService.getInstance(ctx).updateProduct(
                 product.getId(), "quantity_add", -1, delta,
@@ -189,28 +175,51 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
                     @Override
                     public void onSuccess(JSONObject response) {
                         if (!response.optBoolean("success")) {
-                            // Revert on failure
                             product.setQuantity(product.getQuantity() - delta);
-                            notifyItemChanged(pos, "QTY");
+                            updatePriceAndQuantityViews(h, product);
                             Toast.makeText(ctx, response.optString("message", "Update failed"),
                                     Toast.LENGTH_SHORT).show();
                         } else {
-                            // Sync with server value to stay accurate
                             int serverQty = response.optInt("new_quantity", product.getQuantity());
                             product.setQuantity(serverQty);
-                            notifyItemChanged(pos, "QTY");
+                            updatePriceAndQuantityViews(h, product);
                             if (changeListener != null) changeListener.onStockChanged();
                         }
                     }
-
                     @Override
                     public void onError(String error) {
-                        // Revert optimistic update
                         product.setQuantity(product.getQuantity() - delta);
-                        notifyItemChanged(pos, "QTY");
+                        updatePriceAndQuantityViews(h, product);
                         Toast.makeText(ctx, "Server error: " + error, Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void showAddStockDialog(Product product, StockViewHolder h, int pos) {
+        AlertDialog.Builder b = new AlertDialog.Builder(ctx);
+        b.setTitle("Add Stock Quantity");
+
+        final EditText input = new EditText(ctx);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Enter quantity to add");
+        b.setView(input);
+
+        b.setPositiveButton("Add", (dialog, which) -> {
+            String raw = input.getText() != null ? input.getText().toString().trim() : "";
+            if (raw.isEmpty()) return;
+            try {
+                int delta = Integer.parseInt(raw);
+                if (delta > 0) {
+                    updateQuantityOnServer(product, delta, h, pos);
+                } else if (delta < 0) {
+                    Toast.makeText(ctx, "Use minus button to reduce stock", Toast.LENGTH_SHORT).show();
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(ctx, "Invalid quantity", Toast.LENGTH_SHORT).show();
+            }
+        });
+        b.setNegativeButton("Cancel", null);
+        b.show();
     }
 
     private void showEditDialog(Product product, String type, String title, int pos) {
@@ -241,8 +250,7 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
                                 notifyItemChanged(pos, "PRICE");
                                 if (changeListener != null) changeListener.onStockChanged();
                             } else {
-                                Toast.makeText(ctx,
-                                        response.optString("message", "Update failed"),
+                                Toast.makeText(ctx, response.optString("message", "Update failed"),
                                         Toast.LENGTH_SHORT).show();
                             }
                         }
@@ -259,13 +267,6 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
     @Override
     public int getItemCount() { return items.size(); }
 
-    // ── Public update API ────────────────────────────────────────────────────
-
-    /**
-     * Full replace using DiffUtil for minimal, animated updates.
-     * Safe to call from main thread; diff is computed inside (list is small enough).
-     * For very large lists (500+), compute diff on background thread first.
-     */
     public void updateData(List<Product> newProducts) {
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
                 new ProductDiffCallback(items, newProducts));
@@ -274,13 +275,11 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         diffResult.dispatchUpdatesTo(this);
     }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
-
     public static class StockViewHolder extends RecyclerView.ViewHolder {
         final TextView  tvCompanyName, tvModelName, tvPrice, tvQuantity,
                 tvCostPrice, tvCurrentQty;
         final View      ivLowStock;
-        final ImageButton btnAddToCart, btnPlus, btnMinus, btnEditCostPrice;
+        final ImageButton btnAddToCart, btnPlus, btnMinus, btnEditCostPrice, btnEditQty;
 
         public StockViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -295,10 +294,9 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
             btnPlus          = itemView.findViewById(R.id.btnPlus);
             btnMinus         = itemView.findViewById(R.id.btnMinus);
             btnEditCostPrice = itemView.findViewById(R.id.btnEditCostPrice);
+            btnEditQty       = itemView.findViewById(R.id.btnEditQty);
         }
     }
-
-    // ── DiffUtil Callback ────────────────────────────────────────────────────
 
     private static class ProductDiffCallback extends DiffUtil.Callback {
         private final List<Product> oldList;

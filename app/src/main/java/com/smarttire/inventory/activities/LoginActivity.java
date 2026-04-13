@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
+import com.smarttire.inventory.utils.KeyboardUtils;
 import com.smarttire.inventory.utils.SharedPrefManager;
 import org.json.JSONObject;
 
@@ -80,6 +81,9 @@ public class LoginActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return;
         }
+
+        // Hide keyboard on attempt
+        KeyboardUtils.hideKeyboard(this);
 
         // Show loading
         showLoading(true);

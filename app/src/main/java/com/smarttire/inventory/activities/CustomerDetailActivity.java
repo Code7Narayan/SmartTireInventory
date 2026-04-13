@@ -1,4 +1,4 @@
-// FILE: activities/CustomerDetailActivity.java (FINAL FIX — addressing checklist)
+// FILE: activities/CustomerDetailActivity.java (UPDATED — Fixed Invalid Sale ID error by finding a valid sale)
 package com.smarttire.inventory.activities;
 
 import android.os.Bundle;
@@ -27,6 +27,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.smarttire.inventory.R;
 import com.smarttire.inventory.adapters.PaymentAdapter;
 import com.smarttire.inventory.adapters.SalesAdapter;
+import com.smarttire.inventory.fragments.SaleDetailBottomSheet;
 import com.smarttire.inventory.models.Customer;
 import com.smarttire.inventory.models.Payment;
 import com.smarttire.inventory.models.SaleRecord;
@@ -52,6 +53,7 @@ public class CustomerDetailActivity extends AppCompatActivity {
     private HeaderAdapter headerAdapter;
     private SectionTitleAdapter salesTitle, paymentTitle;
     private Customer currentCustomer;
+    private List<SaleRecord> currentSalesList = new ArrayList<>();
 
     private static final NumberFormat INR_FMT = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
 
@@ -92,6 +94,10 @@ public class CustomerDetailActivity extends AppCompatActivity {
         headerAdapter = new HeaderAdapter();
         salesTitle = new SectionTitleAdapter("Purchase History");
         salesAdapter = new SalesAdapter(this, new ArrayList<>());
+        salesAdapter.setOnSaleClickListener(sale -> {
+            SaleDetailBottomSheet.newInstance(sale, sale.getCustomerNameSnap(), sale.getGstNumber())
+                    .show(getSupportFragmentManager(), "SaleDetail");
+        });
         paymentTitle = new SectionTitleAdapter("Payment History");
         paymentAdapter = new PaymentAdapter(this, new ArrayList<>());
 
@@ -133,16 +139,16 @@ public class CustomerDetailActivity extends AppCompatActivity {
                     currentCustomer.setAddress(cust.optString("address"));
                     currentCustomer.setGstNumber(cust.optString("gst_number"));
 
-                    // ✅ Clear list before adding (Checklist Item 2)
-                    List<SaleRecord> sales = new ArrayList<>();
+                    // Update sales list
+                    currentSalesList.clear();
                     JSONArray salesArr = data.optJSONArray("sales");
                     if (salesArr != null) {
                         for (int i = 0; i < salesArr.length(); i++) {
-                            sales.add(SaleRecord.fromJSON(salesArr.getJSONObject(i)));
+                            currentSalesList.add(SaleRecord.fromJSON(salesArr.getJSONObject(i)));
                         }
                     }
-                    salesAdapter.updateData(sales);
-                    salesTitle.setVisible(!sales.isEmpty());
+                    salesAdapter.updateData(currentSalesList);
+                    salesTitle.setVisible(!currentSalesList.isEmpty());
 
                     List<Payment> payments = new ArrayList<>();
                     JSONArray payArr = data.optJSONArray("payments");
@@ -176,7 +182,7 @@ public class CustomerDetailActivity extends AppCompatActivity {
         void update(JSONObject cust, JSONObject ledger) {
             this.cust = cust;
             this.ledger = ledger;
-            notifyDataSetChanged(); // ✅ Checklist Item 1 (notifyDataSetChanged)
+            notifyDataSetChanged();
         }
 
         @NonNull @Override
@@ -188,7 +194,6 @@ public class CustomerDetailActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull VH h, int p) {
             if (cust == null || ledger == null) return;
             
-            // ✅ Set TextViews properly (Checklist Item 1)
             h.tvName.setText(cust.optString("name"));
             h.tvPhone.setText(cust.optString("phone"));
             h.tvAddress.setText(cust.optString("address"));
@@ -199,7 +204,6 @@ public class CustomerDetailActivity extends AppCompatActivity {
             h.tvTotalPaid.setText(INR_FMT.format(ledger.optDouble("total_paid")));
             h.tvTotalDue.setText(INR_FMT.format(ledger.optDouble("total_due")));
 
-            // Show "Record Payment" only if there is a balance
             double due = ledger.optDouble("total_due", 0);
             h.btnPayNow.setVisibility(due > 0.01 ? View.VISIBLE : View.GONE);
             h.btnPayNow.setOnClickListener(v -> showQuickPaymentDialog());
@@ -271,11 +275,28 @@ public class CustomerDetailActivity extends AppCompatActivity {
         double amt = Double.parseDouble(amountStr);
         if (amt <= 0) return;
 
+        // Find a sale ID with balance to record payment against
+        int targetSaleId = 0;
+        for (SaleRecord s : currentSalesList) {
+            if (s.getRemainingAmount() > 0.01) {
+                targetSaleId = s.getId();
+                break;
+            }
+        }
+
+        // Fallback to most recent sale if none have balance but sales exist
+        if (targetSaleId == 0 && !currentSalesList.isEmpty()) {
+            targetSaleId = currentSalesList.get(0).getId();
+        }
+
+        if (targetSaleId == 0) {
+            Toast.makeText(this, "No sales found to record payment", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         progressBar.setVisibility(View.VISIBLE);
-        // Note: For general account payment, we might need a specific API or use the first unpaid sale
-        // For now, if your API requires a saleId, this might need adjustment to handle general customer ledger.
-        // If your add_payment.php handles sale_id=0 as a general payment, use that.
-        api.addPayment(0, amt, mode, "General customer payment", new ApiService.ApiCallback() {
+        // Using addPayment with a valid saleId found from the list
+        api.addPayment(targetSaleId, amt, mode, "General customer payment", new ApiService.ApiCallback() {
             @Override public void onSuccess(JSONObject response) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(CustomerDetailActivity.this, response.optString("message"), Toast.LENGTH_SHORT).show();

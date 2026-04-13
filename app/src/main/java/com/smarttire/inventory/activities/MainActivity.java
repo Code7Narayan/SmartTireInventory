@@ -1,4 +1,4 @@
-// FILE: activities/MainActivity.java  (UPDATED — handles pre-select product from StockDetail)
+// FILE: activities/MainActivity.java  (UPDATED — removed duplicate navigation drawer logic)
 package com.smarttire.inventory.activities;
 
 import android.content.Intent;
@@ -146,18 +146,8 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.drawer_dashboard) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
-        } else if (id == R.id.drawer_stock) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_stock);
-        } else if (id == R.id.drawer_sell) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_sell);
-        } else if (id == R.id.drawer_customers) {
+        if (id == R.id.drawer_customers) {
             startActivity(new Intent(this, CustomerActivity.class));
-        } else if (id == R.id.drawer_sales_history) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_sales_history);
-        } else if (id == R.id.drawer_add_company) {
-            startActivity(new Intent(this, AddCompanyActivity.class));
         } else if (id == R.id.drawer_add_stock) {
             startActivity(new Intent(this, AddStockActivity.class));
         } else if (id == R.id.drawer_theme) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FILE: res/layout/item_stock.xml (CLEAN INDUSTRY STANDARD) -->
+<!-- FILE: res/layout/item_stock.xml (UPDATED) -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -59,9 +59,9 @@
                     android:id="@+id/tvPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="₹0,000"
+                    android:text="Total: ₹0,000"
                     android:textColor="@color/success"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -97,7 +97,7 @@
                     android:id="@+id/tvCostPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cost: ₹0,000"
+                    android:text="Unit: ₹0,000"
                     android:textColor="@color/error"
                     android:textSize="14sp" />
 
@@ -147,6 +147,16 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_plus"
                     app:tint="@color/primary" />
+
+                <ImageButton
+                    android:id="@+id/btnEditQty"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/primary"
+                    android:padding="6dp"
+                    android:scaleType="fitCenter"/>
             </LinearLayout>
 
             <ImageButton

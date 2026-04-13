@@ -27,6 +27,7 @@ import com.smarttire.inventory.adapters.CustomerAdapter;
 import com.smarttire.inventory.models.Customer;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
+import com.smarttire.inventory.utils.KeyboardUtils;
 import com.smarttire.inventory.utils.StockPdfGenerator;
 
 import org.json.JSONArray;
@@ -79,6 +80,7 @@ public class CustomerActivity extends AppCompatActivity {
         rvCustomers.setAdapter(adapter);
 
         adapter.setOnItemClickListener(customer -> {
+            KeyboardUtils.hideKeyboard(this);
             Intent i = new Intent(CustomerActivity.this, CustomerDetailActivity.class);
 
             i.putExtra("customer_id", customer.getId());   // 🔥 MUST
@@ -104,11 +106,16 @@ public class CustomerActivity extends AppCompatActivity {
             }
         });
 
-        swipeRefresh.setOnRefreshListener(() -> loadCustomers(true));
+        swipeRefresh.setOnRefreshListener(() -> {
+            KeyboardUtils.hideKeyboard(this);
+            loadCustomers(true);
+        });
 
         FloatingActionButton fab = findViewById(R.id.fabAddCustomer);
-        fab.setOnClickListener(v ->
-                startActivityForResult(new Intent(this, AddCustomerActivity.class), REQ_ADD_CUSTOMER));
+        fab.setOnClickListener(v -> {
+                KeyboardUtils.hideKeyboard(this);
+                startActivityForResult(new Intent(this, AddCustomerActivity.class), REQ_ADD_CUSTOMER);
+        });
 
         loadCustomers(true);
     }
@@ -124,6 +131,7 @@ public class CustomerActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == 1) {
+            KeyboardUtils.hideKeyboard(this);
             exportAllCustomersPdf();
             return true;
         }

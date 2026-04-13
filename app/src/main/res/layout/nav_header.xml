@@ -10,10 +10,10 @@
     android:background="@drawable/bg_login_gradient">
 
     <ImageView
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@drawable/ic_tire"
-        android:tint="@color/white"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:src="@drawable/ic_action_name"
+        android:scaleType="centerInside"
         android:contentDescription="@string/app_name"/>
 
     <TextView

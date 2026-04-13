@@ -1,11 +1,11 @@
-// FILE: fragments/SellFragment.java (MODERN CART & CHECKOUT LOGIC)
+// FILE: fragments/SellFragment.java (ULTRA STABILITY FIX - Realme/Oppo Focus Fix)
 package com.smarttire.inventory.fragments;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +32,7 @@ import com.smarttire.inventory.models.Product;
 import com.smarttire.inventory.network.ApiConfig;
 import com.smarttire.inventory.network.ApiService;
 import com.smarttire.inventory.utils.CartManager;
+import com.smarttire.inventory.utils.KeyboardUtils;
 import com.smarttire.inventory.utils.MessageHelper;
 
 import org.json.JSONArray;
@@ -59,9 +60,12 @@ public class SellFragment extends Fragment {
     private CartAdapter cartAdapter;
     private boolean isUpdatingAmounts = false;
 
-    // Track order summary for messaging
     private List<Product> currentOrderItems;
     private double currentOrderTotal, currentOrderPaid;
+
+    // Handler to debounce total calculation and avoid layout jitters while typing
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
+    private final Runnable updateRunnable = this::performUpdateUI;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -103,25 +107,32 @@ public class SellFragment extends Fragment {
     }
 
     private void setupCart() {
-        cartAdapter = new CartAdapter(CartManager.getInstance().getItems(), new CartAdapter.OnCartListener() {
+        cartAdapter = new CartAdapter(new CartAdapter.OnCartListener() {
             @Override
-            public void onQuantityChanged() {
-                updateUI();
+            public void onCartUpdated() {
+                // Use debounce to prevent RecyclerView from re-binding while user is typing
+                updateHandler.removeCallbacks(updateRunnable);
+                updateHandler.postDelayed(updateRunnable, 100); 
             }
 
             @Override
             public void onItemRemoved() {
-                updateUI();
+                performUpdateUI();
                 cartAdapter.updateItems(CartManager.getInstance().getItems());
             }
         });
-        rvCart.setLayoutManager(new LinearLayoutManager(requireContext()));
+        
+        cartAdapter.updateItems(CartManager.getInstance().getItems());
+        
+        LinearLayoutManager lm = new LinearLayoutManager(requireContext());
+        rvCart.setLayoutManager(lm);
+        rvCart.setItemAnimator(null); // CRITICAL: Disable animations to prevent view detachment on Realme
+        rvCart.setHasFixedSize(true);
         rvCart.setAdapter(cartAdapter);
-        updateUI();
+        performUpdateUI();
     }
 
     private void setupSearching() {
-        // Customer Search
         spinnerCustomer.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
@@ -138,9 +149,9 @@ public class SellFragment extends Fragment {
             } else {
                 tvCustomerDue.setVisibility(View.GONE);
             }
+            KeyboardUtils.hideKeyboard(requireActivity());
         });
 
-        // Product Search
         spinnerProduct.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
@@ -151,6 +162,7 @@ public class SellFragment extends Fragment {
 
         spinnerProduct.setOnItemClickListener((parent, view, position, id) -> {
             selectedProduct = (Product) parent.getItemAtPosition(position);
+            KeyboardUtils.hideKeyboard(requireActivity());
         });
     }
 
@@ -160,20 +172,7 @@ public class SellFragment extends Fragment {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override public void afterTextChanged(Editable s) {
                 if (isUpdatingAmounts) return;
-                isUpdatingAmounts = true;
                 calculateRemaining();
-                isUpdatingAmounts = false;
-            }
-        });
-
-        etRemainingAmount.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
-                if (isUpdatingAmounts) return;
-                isUpdatingAmounts = true;
-                calculatePaid();
-                isUpdatingAmounts = false;
             }
         });
     }
@@ -182,23 +181,13 @@ public class SellFragment extends Fragment {
         double total = CartManager.getInstance().getTotal();
         double paid = 0;
         try {
-            Editable text = etPaidAmount.getText();
-            if (text != null) paid = Double.parseDouble(text.toString());
+            String text = etPaidAmount.getText().toString();
+            if (!text.isEmpty()) paid = Double.parseDouble(text);
         } catch (Exception ignored) {}
-        etRemainingAmount.setText(String.valueOf(Math.max(0, total - paid)));
+        etRemainingAmount.setText(String.format(Locale.getDefault(), "%.2f", Math.max(0, total - paid)));
     }
 
-    private void calculatePaid() {
-        double total = CartManager.getInstance().getTotal();
-        double remaining = 0;
-        try {
-            Editable text = etRemainingAmount.getText();
-            if (text != null) remaining = Double.parseDouble(text.toString());
-        } catch (Exception ignored) {}
-        etPaidAmount.setText(String.valueOf(Math.max(0, total - remaining)));
-    }
-
-    private void searchCustomers(String query) {
+    private void searchCustomers(final String query) {
         api.getCustomers(query, 1, new ApiService.ApiCallback() {
             @Override public void onSuccess(JSONObject r) {
                 try {
@@ -218,7 +207,7 @@ public class SellFragment extends Fragment {
         });
     }
 
-    private void searchProducts(String query) {
+    private void searchProducts(final String query) {
         api.getProducts(new ApiService.ApiCallback() {
             @Override public void onSuccess(JSONObject r) {
                 try {
@@ -251,22 +240,33 @@ public class SellFragment extends Fragment {
         p.setModelName(selectedProduct.getModelName());
         p.setTireSize(selectedProduct.getTireSize());
         p.setTireType(selectedProduct.getTireType());
-        p.setPrice(selectedProduct.getPrice());
+        // Default selling price is set to cost price as per current workflow
+        p.setPrice(selectedProduct.getCostPrice()); 
         p.setCostPrice(selectedProduct.getCostPrice());
         p.setQuantity(selectedProduct.getQuantity());
 
         CartManager.getInstance().addItem(p);
         cartAdapter.updateItems(CartManager.getInstance().getItems());
-        updateUI();
+        performUpdateUI();
         spinnerProduct.setText("");
         selectedProduct = null;
+        KeyboardUtils.hideKeyboard(requireActivity());
     }
 
-    private void updateUI() {
+    private void performUpdateUI() {
+        if (isUpdatingAmounts) return;
+        isUpdatingAmounts = true;
+        
         double total = CartManager.getInstance().getTotal();
         tvTotalPrice.setText(NumberFormat.getCurrencyInstance(new Locale("en","IN")).format(total));
-        etPaidAmount.setText(String.valueOf((int)total));
-        etRemainingAmount.setText("0");
+        
+        if (!etPaidAmount.hasFocus()) {
+            etPaidAmount.setText(String.format(Locale.getDefault(), "%.2f", total));
+            etRemainingAmount.setText("0.00");
+        } else {
+            calculateRemaining();
+        }
+        isUpdatingAmounts = false;
     }
 
     private void placeOrder() {
@@ -278,53 +278,61 @@ public class SellFragment extends Fragment {
             Toast.makeText(requireContext(), "Cart is empty", Toast.LENGTH_SHORT).show();
             return;
         }
+        
+        for (Product p : CartManager.getInstance().getItems()) {
+            if (p.getPrice() <= 0) {
+                Toast.makeText(requireContext(), "Please enter a valid amount for " + p.getDisplayName(), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
         String payMode = spinnerPayMode.getText().toString();
         currentOrderTotal = CartManager.getInstance().getTotal();
         currentOrderPaid = 0;
         try {
-            Editable text = etPaidAmount.getText();
-            if (text != null) currentOrderPaid = Double.parseDouble(text.toString());
+            String text = etPaidAmount.getText().toString();
+            if (!text.isEmpty()) currentOrderPaid = Double.parseDouble(text);
         } catch (Exception ignored) {}
 
         currentOrderItems = new ArrayList<>(CartManager.getInstance().getItems());
+        KeyboardUtils.hideKeyboard(requireActivity());
         processNextItem(currentOrderItems, 0, currentOrderPaid, payMode);
     }
 
-    private void processNextItem(List<Product> items, int index, double remainingPaid, String payMode) {
+    private void processNextItem(final List<Product> items, final int index, final double remainingPaid, final String payMode) {
         if (!isAdded()) return;
 
         if (index >= items.size()) {
             Toast.makeText(requireContext(), "Order Placed Successfully", Toast.LENGTH_SHORT).show();
-            
-            // Send SMS notification
             MessageHelper.sendOrderSms(requireContext(), selectedCustomer, items, currentOrderTotal, currentOrderPaid);
-
             CartManager.getInstance().clear();
             cartAdapter.updateItems(new ArrayList<>());
-            updateUI();
+            performUpdateUI();
             spinnerCustomer.setText("");
             selectedCustomer = null;
             return;
         }
 
-        Product p = items.get(index);
+        final Product p = items.get(index);
         double itemTotal = p.getPrice() * p.getCartQuantity();
-        double currentPaid = Math.min(remainingPaid, itemTotal);
+        
+        // Distribute paid amount among items correctly
+        final double itemPaidAmount = Math.min(remainingPaid, itemTotal);
 
-        api.sellProduct(p.getId(), selectedCustomer.getId(), p.getCartQuantity(), currentPaid, payMode, "", new ApiService.ApiCallback() {
+        // Send 'itemPaidAmount' as the 'paid_amount' for this specific item/sale entry
+        api.sellProduct(p.getId(), selectedCustomer.getId(), p.getCartQuantity(), p.getPrice(), itemPaidAmount, payMode, "", new ApiService.ApiCallback() {
             @Override
             public void onSuccess(JSONObject response) {
                 if (!isAdded()) return;
                 if (response.optBoolean("success")) {
-                    processNextItem(items, index + 1, Math.max(0, remainingPaid - currentPaid), payMode);
+                    // Update remainingPaid by subtracting what was already allocated to this item
+                    double newlyRemaining = Math.max(0, remainingPaid - itemPaidAmount);
+                    processNextItem(items, index + 1, newlyRemaining, payMode);
                 } else {
-                    Toast.makeText(requireContext(), "Error selling " + p.getDisplayName(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Error selling " + p.getDisplayName() + ": " + response.optString("message"), Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onError(String error) {
+            @Override public void onError(String error) {
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), "Server error: " + error, Toast.LENGTH_SHORT).show();
             }
@@ -345,15 +353,14 @@ public class SellFragment extends Fragment {
 
     private static class CartAdapter extends RecyclerView.Adapter<CartAdapter.VH> {
         interface OnCartListener {
-            void onQuantityChanged();
+            void onCartUpdated();
             void onItemRemoved();
         }
 
-        private List<Product> items;
+        private List<Product> items = new ArrayList<>();
         private final OnCartListener listener;
 
-        CartAdapter(List<Product> items, OnCartListener listener) {
-            this.items = items;
+        CartAdapter(OnCartListener listener) {
             this.listener = listener;
         }
 
@@ -363,74 +370,83 @@ public class SellFragment extends Fragment {
         }
 
         @NonNull @Override public VH onCreateViewHolder(@NonNull ViewGroup p, int t) {
-            return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_cart, p, false));
+            return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_cart, p, false), listener);
         }
 
         @Override public void onBindViewHolder(@NonNull VH h, int pos) {
             Product p = items.get(pos);
-            h.tvName.setText(p.getDisplayName());
-            h.tvCost.setText(String.format("Cost: %s", p.getFormattedCostPrice()));
-            h.tvSell.setText(String.format("Sell: %s", p.getFormattedPrice()));
-            h.tvQty.setText(String.valueOf(p.getCartQuantity()));
-
-            h.btnPlus.setOnClickListener(v -> {
-                p.setCartQuantity(p.getCartQuantity() + 1);
-                h.tvQty.setText(String.valueOf(p.getCartQuantity()));
-                listener.onQuantityChanged();
-            });
-
-            h.btnMinus.setOnClickListener(v -> {
-                if (p.getCartQuantity() > 1) {
-                    p.setCartQuantity(p.getCartQuantity() - 1);
-                    h.tvQty.setText(String.valueOf(p.getCartQuantity()));
-                    listener.onQuantityChanged();
-                }
-            });
-
-            h.btnRemove.setOnClickListener(v -> {
-                CartManager.getInstance().removeItem(p.getId());
-                listener.onItemRemoved();
-            });
-
-            h.btnEditPrice.setOnClickListener(v -> {
-                AlertDialog.Builder b = new AlertDialog.Builder(v.getContext());
-                b.setTitle("Edit Selling Price");
-                
-                final EditText input = new EditText(v.getContext());
-                input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                input.setText(String.valueOf(p.getPrice()));
-                b.setView(input);
-
-                b.setPositiveButton("OK", (dialog, which) -> {
-                    try {
-                        double newPrice = Double.parseDouble(input.getText().toString());
-                        p.setPrice(newPrice);
-                        h.tvSell.setText(String.format("Sell: %s", p.getFormattedPrice()));
-                        listener.onQuantityChanged();
-                    } catch (Exception e) {
-                        Toast.makeText(v.getContext(), "Invalid price", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                b.setNegativeButton("Cancel", null);
-                b.show();
-            });
+            h.bind(p);
         }
 
         @Override public int getItemCount() { return items.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
-            TextView tvName, tvCost, tvSell, tvQty;
-            ImageButton btnPlus, btnMinus, btnRemove, btnEditPrice;
-            VH(View v) {
+            TextView tvName, tvQty;
+            EditText etCostPrice;
+            ImageButton btnPlus, btnMinus, btnRemove;
+            Product boundProduct;
+            boolean isBinding = false;
+
+            VH(View v, final OnCartListener listener) {
                 super(v);
                 tvName = v.findViewById(R.id.tvProductName);
-                tvCost = v.findViewById(R.id.tvCostPrice);
-                tvSell = v.findViewById(R.id.tvSellPrice);
+                etCostPrice = v.findViewById(R.id.etItemCostPrice);
                 tvQty = v.findViewById(R.id.tvQuantity);
                 btnPlus = v.findViewById(R.id.btnPlus);
                 btnMinus = v.findViewById(R.id.btnMinus);
                 btnRemove = v.findViewById(R.id.btnRemove);
-                btnEditPrice = v.findViewById(R.id.btnEditPrice);
+
+                etCostPrice.addTextChangedListener(new TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+                    @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
+                    @Override public void afterTextChanged(Editable s) {
+                        if (isBinding || boundProduct == null) return;
+                        try {
+                            String input = s.toString();
+                            double val = input.isEmpty() ? 0 : Double.parseDouble(input);
+                            boundProduct.setPrice(val);
+                        } catch (Exception e) {
+                            boundProduct.setPrice(0);
+                        }
+                        listener.onCartUpdated();
+                    }
+                });
+
+                btnPlus.setOnClickListener(view -> {
+                    if (boundProduct != null) {
+                        boundProduct.setCartQuantity(boundProduct.getCartQuantity() + 1);
+                        tvQty.setText(String.valueOf(boundProduct.getCartQuantity()));
+                        listener.onCartUpdated();
+                    }
+                });
+
+                btnMinus.setOnClickListener(view -> {
+                    if (boundProduct != null && boundProduct.getCartQuantity() > 1) {
+                        boundProduct.setCartQuantity(boundProduct.getCartQuantity() - 1);
+                        tvQty.setText(String.valueOf(boundProduct.getCartQuantity()));
+                        listener.onCartUpdated();
+                    }
+                });
+
+                btnRemove.setOnClickListener(view -> {
+                    if (boundProduct != null) {
+                        CartManager.getInstance().removeItem(boundProduct.getId());
+                        listener.onItemRemoved();
+                    }
+                });
+            }
+
+            void bind(Product p) {
+                this.isBinding = true;
+                this.boundProduct = p;
+                tvName.setText(p.getDisplayName());
+                tvQty.setText(String.valueOf(p.getCartQuantity()));
+                
+                String priceStr = String.valueOf(p.getPrice());
+                if (!etCostPrice.getText().toString().equals(priceStr)) {
+                    etCostPrice.setText(priceStr);
+                }
+                this.isBinding = false;
             }
         }
     }

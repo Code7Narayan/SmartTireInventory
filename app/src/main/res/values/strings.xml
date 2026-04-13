@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!-- FILE: app/src/main/res/values/strings.xml  (UPDATED) -->
 <resources>
-    <string name="app_name">Smart Tire ERP</string>
+    <string name="app_name">Annand Tyres</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
